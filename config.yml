@@ -1,0 +1,134 @@
+# --- 경로 설정 ---
+base_dir: W:\ComfyUI_windows_portable  # 작업 디렉토리
+
+# --- 처리할 타입 리스트 ---
+types:
+  - IL
+  - Pony
+
+# --- char.yml 관련 설정 ---
+char:
+  # 제거할 태그 목록
+  # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
+  excluded_tags:
+    - '/cum .*/'
+    - '/from .*/'
+    - '/mole .*/'
+    - '/holding .*/'
+    - '/.* body/'
+    - '/.* lights/'
+    - '/.* penis/'
+    - '/.* armor/'
+    - '/.* horns/'
+    - '/.*hands up.*/'
+    - '/.* cum/'
+    - '/.* mouth/'
+    - '/.* background/'
+    - 'looking at viewer'
+    - 'censored'
+    - 'weapon'
+    - 'eyes closed'
+    - 'monochrome'
+    - 'horns'
+    - 'bodysuit'
+    - 'holding'
+    - 'blush'
+    - 'night'
+    - 'doggystyle'
+    - 'sword'
+    - 'kneeling'
+    - 'blurry'
+    - 'armor'
+    - 'anime coloring'
+    - 'hand up'
+    - 'indoors'
+    - 'standing'
+    - '1boy'
+    - 'ass'
+    - 'nipples'
+    - 'outdoors'
+    - 'hetero'
+    - 'cum'
+    - 'ahoge'
+    - 'sitting'
+    - 'one eye closed'
+    - 'breasts out'
+    - 'large breasts'
+    - 'mole'
+    - 'mosaic censoring'
+    - 'smile'
+    - 'vaginal'
+    - 'penis'
+    - 'pussy'
+    - 'tongue'
+    - 'sex'
+    - 'closed eyes'
+    - 'solo'
+    - 'tongue out'
+    - 'sky'
+    - 'flower'
+    - 'multiple girls'
+    - 'microphone'
+    - 'singing'
+    - 'cup'
+    - 'cloud'
+    - 'music'
+    - 'tree'
+    - 'pov'
+    - 'solo focus'
+    - '/.*nude.*/'
+    - 'arm grab'
+  
+  # dress 필드로 이동할 태그 목록
+  # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
+  dress_tags:
+    - 'hat'
+    - 'top'
+    - '/.*sleeves.*/'
+    - '/.*jewelry.*/'
+    - '/.*thighhighs.*/'
+    - '/.* top.*/'
+    - '/.* hat.*/'
+    - '/.* socks.*/'
+    - '/.* cap.*/'
+    - '/.*underwear.*/'
+    - '/.*nurse.*/'
+    - '/.*footwear.*/'
+    - '/.*gloves.*/'
+    - '/.*boot.*/'
+    - '/.*heels.*/'
+    - '/.*sleeveless.*/'
+    - '/.*thigh.*/'
+    - '/.*belt.*/'
+    - '/.*necklace.*/'
+    - '/.*dress.*/'
+    - '/.*skirt.*/'
+    - '/.*shoulders.*/'
+    - '/.*piercing.*/'
+    - '/.*shirt.*/'
+    - '/.*uniform.*/'
+    - '/.*clothing.*/'
+    - '/.*outfit.*/'
+    - '/.*panties.*/'
+    - '/.* cleavage.*/'
+    - '/.* jacket.*/'
+
+# --- lora.yml 관련 설정 ---
+lora:
+  # 태그 최대 개수 제한
+  max_tags: 64
+  
+  # 제거할 태그 목록
+  # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
+  excluded_tags:
+    - '/.* background/'
+    - '/.*nude.*/'
+    - 'looking at viewer'
+    - 'monochrome'
+    - 'smile'
+    - 'eyes closed'
+    - 'solo'
+    - 'bodysuit'
+    - '1girl'
+    - '1 girl'
+
