@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 set "PYTHON_EXE=W:\ComfyUI_windows_portable\python_embeded\python.exe"
-set "SCRIPT_PATH=%~dp0remove_excluded_tags_char.py"
+set "SCRIPT_PATH=%~dp0scripts\remove_excluded_tags_lora.py"
 
 cd /d "%~dp0"
 
