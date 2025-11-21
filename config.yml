@@ -149,11 +149,16 @@ lora:
   # 제거할 태그 목록
   # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
   excluded_tags:
+    - '/.* eyes/'
     - '/.* background/'
+    - '/.*handbag.*/'
     - '/.*nude.*/'
     - 'looking at viewer'
     - 'monochrome'
     - 'hyper realism'
+    - 'feet'
+    - 'legs'
+    - 'realistic'
     - 'smile'
     - 'eyes closed'
     - 'solo'
