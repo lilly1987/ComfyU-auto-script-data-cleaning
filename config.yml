@@ -96,13 +96,14 @@ char:
   # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
   dress_tags:
     - 'hat'
+    - 'side slit'
     - 'top'
     - '/.* top.*/'
     - '/.* coat.*/'
     - '/.* footwear.*/'
     - '/.* bikini.*/'
-    - '/.* clothes.*/'
     - '/.* costume.*/'
+    - '/.* headwear.*/'
     - '/.* pantyhose.*/'
     - '/.* eyewear.*/'
     - '/.* shoulder.*/'

@@ -118,7 +118,8 @@ def process_char_yml(yml_path: str, excluded_tags: list, dress_tags: list):
     modified_count = 0
     total_removed_tags = 0
     modified_dress_count = 0
-    modified_keys = []
+    # modified_keys -> dict: key -> list of removed tags
+    modified_keys = {}
     
     for key, value in yml_data.items():
         if not isinstance(value, dict):
@@ -136,8 +137,8 @@ def process_char_yml(yml_path: str, excluded_tags: list, dress_tags: list):
                         char_value, dress_tags
                     ) if dress_tags else []
                     
-                    # 제외 태그 및 dress 태그 제거
-                    filtered_char, removed_count = TagProcessor.remove_excluded_tags_from_string(
+                    # 제외 태그 및 dress 태그 제거 (제거된 태그 목록 포함)
+                    filtered_char, removed_count, removed_tags = TagProcessor.remove_excluded_tags_from_string_with_list(
                         char_value, excluded_tags, dress_tags
                     )
                     
@@ -147,6 +148,9 @@ def process_char_yml(yml_path: str, excluded_tags: list, dress_tags: list):
                         char_modified = True
                         modified_count += 1
                         total_removed_tags += removed_count
+                        # 기록된 제거 태그 누적
+                        if removed_tags:
+                            modified_keys.setdefault(key, []).extend(removed_tags)
                         
                         if dress_tag_list:
                             print(f"    - {key}: {removed_count}개 태그 제거, {len(dress_tag_list)}개 dress 태그 이동")
@@ -205,8 +209,8 @@ def process_char_yml(yml_path: str, excluded_tags: list, dress_tags: list):
 
                     # 수정된 키 기록
                     if char_modified or (dress_tag_list or (not has_dress and modified_dress_count > 0)):
-                        if key not in modified_keys:
-                            modified_keys.append(key)
+                        # ensure key exists in modified_keys even if no removed tags
+                        modified_keys.setdefault(key, modified_keys.get(key, []))
     
     return yml_data, modified_count, total_removed_tags, modified_dress_count, modified_keys
 
@@ -249,12 +253,26 @@ def process_type(type_name: str):
             orig = {}
 
         # ensure orig is a mapping-like object
-        for k in modified_keys:
+        for k, removed_list in modified_keys.items():
             try:
                 orig[k] = modified_data.get(k, {})
+                # 주석 문자열 구성
+                if removed_list:
+                    # 중복 제거 및 정렬된 표현
+                    uniq = []
+                    seen = set()
+                    for t in removed_list:
+                        n = TagProcessor.normalize_tag(t)
+                        if n not in seen:
+                            seen.add(n)
+                            uniq.append(t)
+                    comment_text = 'auto removed: ' + ', '.join(uniq)
+                else:
+                    comment_text = 'auto'
+
                 # ruamel CommentedMap에 eol 코멘트 추가
                 try:
-                    orig.yaml_add_eol_comment('auto', k)
+                    orig.yaml_add_eol_comment(comment_text, k)
                 except Exception:
                     # 일부 경우에는 orig이 일반 dict일 수 있으므로 무시
                     pass

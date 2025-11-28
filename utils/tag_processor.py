@@ -206,6 +206,148 @@ class TagProcessor:
             result = ', '.join(filtered_tags)
         
         return result, removed_count
+
+    @staticmethod
+    def remove_excluded_tags_from_string_with_list(
+        tag_string: str,
+        excluded_tags: List[str],
+        dress_tags: Optional[List[str]] = None
+    ) -> Tuple[str, int, List[str]]:
+        """
+        remove_excluded_tags_from_string와 동일하지만 제거된 태그 목록도 반환합니다.
+
+        Returns:
+            (필터링된 태그 문자열, 제거된 태그 개수, 제거된 태그 리스트)
+        """
+        if not tag_string or not tag_string.strip():
+            return tag_string, 0, []
+
+        removed_tags = []
+
+        brace_pattern = r'\{([^}]*)\}'
+        matches = list(re.finditer(brace_pattern, tag_string))
+
+        if matches:
+            result = tag_string
+            total_removed = 0
+
+            for match in reversed(matches):
+                brace_content = match.group(1)
+
+                if '|' in brace_content:
+                    parts = [p.strip() for p in brace_content.split('|')]
+                    filtered_parts = []
+                    total_part_removed = 0
+
+                    for part in parts:
+                        part_tags = [t.strip() for t in part.split(',') if t.strip()]
+                        filtered_part_tags = []
+                        seen_normalized = set()
+                        part_removed = 0
+
+                        for tag in part_tags:
+                            if TagProcessor.is_tag_excluded(tag, excluded_tags):
+                                part_removed += 1
+                                removed_tags.append(tag)
+                                continue
+                            if dress_tags and TagProcessor.is_tag_excluded(tag, dress_tags):
+                                part_removed += 1
+                                removed_tags.append(tag)
+                                continue
+                            normalized = TagProcessor.normalize_tag(tag)
+                            if normalized not in seen_normalized:
+                                seen_normalized.add(normalized)
+                                filtered_part_tags.append(tag)
+                            else:
+                                part_removed += 1
+                                removed_tags.append(tag)
+
+                        filtered_parts.append(filtered_part_tags)
+                        total_part_removed += part_removed
+
+                    part_strings = []
+                    for filtered_part in filtered_parts:
+                        if filtered_part:
+                            part_strings.append(', '.join(filtered_part))
+                        else:
+                            part_strings.append('')
+
+                    if any(part_strings):
+                        new_brace = '{' + '|'.join(part_strings) + '}'
+                    else:
+                        new_brace = '{|}'
+
+                    result = result[:match.start()] + new_brace + result[match.end():]
+                    total_removed += total_part_removed
+                else:
+                    tags = [t.strip() for t in brace_content.split(',') if t.strip()]
+                    filtered_tags = []
+                    seen_normalized = set()
+                    removed_count = 0
+
+                    for tag in tags:
+                        if TagProcessor.is_tag_excluded(tag, excluded_tags):
+                            removed_count += 1
+                            removed_tags.append(tag)
+                            continue
+                        if dress_tags and TagProcessor.is_tag_excluded(tag, dress_tags):
+                            removed_count += 1
+                            removed_tags.append(tag)
+                            continue
+                        normalized = TagProcessor.normalize_tag(tag)
+                        if normalized not in seen_normalized:
+                            seen_normalized.add(normalized)
+                            filtered_tags.append(tag)
+                        else:
+                            removed_count += 1
+                            removed_tags.append(tag)
+
+                    if filtered_tags:
+                        new_brace = '{' + ', '.join(filtered_tags) + '}'
+                    else:
+                        new_brace = '{}'
+
+                    result = result[:match.start()] + new_brace + result[match.end():]
+                    total_removed += removed_count
+
+            return result, total_removed, removed_tags
+
+        tags = [tag.strip() for tag in tag_string.split(',')]
+        filtered_tags = []
+        seen_normalized = set()
+        removed_count = 0
+
+        for tag in tags:
+            if not tag:
+                continue
+
+            if TagProcessor.is_tag_excluded(tag, excluded_tags):
+                removed_count += 1
+                removed_tags.append(tag)
+                continue
+
+            if dress_tags and TagProcessor.is_tag_excluded(tag, dress_tags):
+                removed_count += 1
+                removed_tags.append(tag)
+                continue
+
+            normalized = TagProcessor.normalize_tag(tag)
+            if normalized not in seen_normalized:
+                seen_normalized.add(normalized)
+                filtered_tags.append(tag)
+            else:
+                removed_count += 1
+                removed_tags.append(tag)
+
+        if not filtered_tags:
+            if tags and any(tag for tag in tags if tag):
+                result = " , "
+            else:
+                result = tag_string
+        else:
+            result = ', '.join(filtered_tags)
+
+        return result, removed_count, removed_tags
     
     @staticmethod
     def extract_dress_tags_from_string(tag_string: str, dress_tags: List[str]) -> List[str]:

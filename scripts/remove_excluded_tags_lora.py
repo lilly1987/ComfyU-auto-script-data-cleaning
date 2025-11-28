@@ -29,6 +29,7 @@ def process_lora_yml(yml_path: str, excluded_tags: list):
     
     modified_count = 0
     total_removed_tags = 0
+    modified_keys = {}
     
     for key, value in yml_data.items():
         if not isinstance(value, dict):
@@ -39,15 +40,18 @@ def process_lora_yml(yml_path: str, excluded_tags: list):
             
             for positive_key, positive_value in positive_dict.items():
                 if isinstance(positive_value, str):
-                    filtered_tags, removed_count = TagProcessor.remove_excluded_tags_from_string(
+                    filtered_tags, removed_count, removed_tags = TagProcessor.remove_excluded_tags_from_string_with_list(
                         positive_value, excluded_tags, dress_tags=None
                     )
-                    
+
                     if filtered_tags != positive_value:
                         yml_data[key]['positive'][positive_key] = filtered_tags
                         modified_count += 1
                         total_removed_tags += removed_count
-                        
+                        # removed tags 기록
+                        if removed_tags:
+                            modified_keys.setdefault(key, []).extend(removed_tags)
+
                         if removed_count > 0:
                             print(f"    - {key}.positive.{positive_key}: {removed_count}개 태그 제거")
     
@@ -67,7 +71,7 @@ def process_type(type_name: str):
     
     print(f"  제외 태그 개수: {len(excluded_tags)}개")
     
-    modified_data, modified_count, total_removed_tags = process_lora_yml(
+    modified_data, modified_count, total_removed_tags, modified_keys = process_lora_yml(
         yml_path, excluded_tags
     )
     
@@ -79,10 +83,42 @@ def process_type(type_name: str):
         return
     
     print(f"\n  수정된 내용 저장 중...")
-    if yaml_handler.save(yml_path, modified_data):
+    # 주석 추가해서 저장
+    try:
+        yaml = yaml_handler.yaml
+        orig = None
+        try:
+            with open(yml_path, 'r', encoding='utf-8') as f:
+                orig = yaml.load(f) or {}
+        except Exception:
+            orig = {}
+
+        for k, removed_list in (modified_keys or {}).items():
+            try:
+                orig[k] = modified_data.get(k, {})
+                if removed_list:
+                    uniq = []
+                    seen = set()
+                    for t in removed_list:
+                        n = TagProcessor.normalize_tag(t)
+                        if n not in seen:
+                            seen.add(n)
+                            uniq.append(t)
+                    comment_text = 'auto removed: ' + ', '.join(uniq)
+                else:
+                    comment_text = 'auto'
+                try:
+                    orig.yaml_add_eol_comment(comment_text, k)
+                except Exception:
+                    pass
+            except Exception:
+                pass
+
+        with open(yml_path, 'w', encoding='utf-8') as f:
+            yaml.dump(orig, f)
         print(f"  [OK] {modified_count}개 키에서 총 {total_removed_tags}개 태그 제거")
-    else:
-        print(f"  [실패] 파일 저장에 실패했습니다.")
+    except Exception as e:
+        print(f"  [실패] 파일 저장에 실패했습니다: {e}")
 
 if __name__ == "__main__":
     print("="*80)
