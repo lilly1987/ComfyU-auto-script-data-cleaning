@@ -170,3 +170,15 @@ lora:
     - '1girl'
     - '1 girl'
 
+# --- tag 관련 설정 ---
+tag:
+  # 태그 최대 개수 제한
+  max_tags: 64
+  
+  # 제거할 태그 목록
+  # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
+  excluded_tags:
+    - 'solo'
+    - '1girl'
+    - '1 girl'
+
