@@ -148,9 +148,22 @@ def process_char_yml(yml_path: str, excluded_tags: list, dress_tags: list):
                         char_modified = True
                         modified_count += 1
                         total_removed_tags += removed_count
-                        # 기록된 제거 태그 누적
+                        # 기록된 제거 태그 누적 (dress로 이동한 태그는 제외)
                         if removed_tags:
-                            modified_keys.setdefault(key, []).extend(removed_tags)
+                            # dress_tag_list에 포함된 태그(정규화된)를 제거
+                            dress_norm = set()
+                            if dress_tag_list:
+                                for dt in dress_tag_list:
+                                    dress_norm.add(TagProcessor.normalize_tag(dt))
+
+                            filtered_removed = []
+                            for t in removed_tags:
+                                if dress_norm and TagProcessor.normalize_tag(t) in dress_norm:
+                                    continue
+                                filtered_removed.append(t)
+
+                            if filtered_removed:
+                                modified_keys.setdefault(key, []).extend(filtered_removed)
                         
                         if dress_tag_list:
                             print(f"    - {key}: {removed_count}개 태그 제거, {len(dress_tag_list)}개 dress 태그 이동")
