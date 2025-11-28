@@ -118,6 +118,7 @@ def process_char_yml(yml_path: str, excluded_tags: list, dress_tags: list):
     modified_count = 0
     total_removed_tags = 0
     modified_dress_count = 0
+    modified_keys = []
     
     for key, value in yml_data.items():
         if not isinstance(value, dict):
@@ -201,8 +202,13 @@ def process_char_yml(yml_path: str, excluded_tags: list, dress_tags: list):
                             print(f"    - {key}: dress 키 추가")
                         else:
                             print(f"      → dress 키 추가 (기본값)")
+
+                    # 수정된 키 기록
+                    if char_modified or (dress_tag_list or (not has_dress and modified_dress_count > 0)):
+                        if key not in modified_keys:
+                            modified_keys.append(key)
     
-    return yml_data, modified_count, total_removed_tags, modified_dress_count
+    return yml_data, modified_count, total_removed_tags, modified_dress_count, modified_keys
 
 def process_type(type_name: str):
     """각 타입에 대해 char.yml 파일을 처리합니다."""
@@ -219,7 +225,7 @@ def process_type(type_name: str):
     print(f"  제외 태그 개수: {len(excluded_tags)}개")
     print(f"  dress 태그 개수: {len(dress_tags)}개")
     
-    modified_data, modified_count, total_removed_tags, modified_dress_count = process_char_yml(
+    modified_data, modified_count, total_removed_tags, modified_dress_count, modified_keys = process_char_yml(
         yml_path, excluded_tags, dress_tags
     )
     
@@ -231,7 +237,39 @@ def process_type(type_name: str):
         return
     
     print(f"\n  수정된 내용 저장 중...")
-    if yaml_handler.save(yml_path, modified_data):
+    # 기존 YAML을 로드해서 수정된 키에 대해 '# auto' 주석을 추가하고 저장
+    try:
+        yaml = yaml_handler.yaml
+        # 원본을 로드 (주석 보존되는 CommentedMap)
+        orig = None
+        try:
+            with open(yml_path, 'r', encoding='utf-8') as f:
+                orig = yaml.load(f) or {}
+        except Exception:
+            orig = {}
+
+        # ensure orig is a mapping-like object
+        for k in modified_keys:
+            try:
+                orig[k] = modified_data.get(k, {})
+                # ruamel CommentedMap에 eol 코멘트 추가
+                try:
+                    orig.yaml_add_eol_comment('auto', k)
+                except Exception:
+                    # 일부 경우에는 orig이 일반 dict일 수 있으므로 무시
+                    pass
+            except Exception:
+                pass
+
+        # 덮어쓰기 저장
+        with open(yml_path, 'w', encoding='utf-8') as f:
+            yaml.dump(orig, f)
+        saved_ok = True
+    except Exception as e:
+        print(f"  오류: YML 파일 저장 실패: {e}")
+        saved_ok = False
+
+    if saved_ok:
         messages = []
         if modified_count > 0:
             messages.append(f"{modified_count}개 키에서 총 {total_removed_tags}개 태그 제거")
