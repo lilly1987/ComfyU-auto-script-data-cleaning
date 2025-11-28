@@ -101,6 +101,7 @@ char:
     - '/.* coat.*/'
     - '/.* footwear.*/'
     - '/.* bikini.*/'
+    - '/.* clothes.*/'
     - '/.* costume.*/'
     - '/.* pantyhose.*/'
     - '/.* eyewear.*/'

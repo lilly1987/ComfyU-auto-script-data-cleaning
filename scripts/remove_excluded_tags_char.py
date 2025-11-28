@@ -23,17 +23,68 @@ dress_tags = config.get_dress_tags()
 # YAML 핸들러 생성
 yaml_handler = YAMLHandler(allow_duplicate_keys=True)
 
-def extract_tags_from_dress_field(dress_value: str) -> list:
-    """dress 필드 값에서 태그를 추출합니다."""
+def extract_dress_structure_from_field(dress_value: str) -> str:
+    """dress 필드 값에서 {||} 구조를 추출합니다."""
     if not dress_value or not isinstance(dress_value, str):
-        return []
+        return ''
     
+    # {  {tag1,tag2|tag3,tag4|...}  |4::__dress__}, 형태에서 내부 {} 블록 추출
+    match = re.search(r'\{\s*\{([^}]+)\}\s*\|', dress_value)
+    if match:
+        inner_content = match.group(1).strip()
+        return inner_content
+    
+    # 기존 형식 지원: {tag1,tag2|...} 형태
     match = re.search(r'\{([^|]+)\|', dress_value)
     if match:
         tags_str = match.group(1).strip()
-        if tags_str:
-            return [tag.strip() for tag in tags_str.split(',') if tag.strip()]
-    return []
+        return tags_str
+    
+    return ''
+
+def extract_dress_structure_from_char(char_value: str, dress_tags: list) -> str:
+    """char 필드에서 dress 태그가 포함된 {||} 구조를 추출합니다."""
+    if not char_value or not dress_tags:
+        return ''
+    
+    # {tag1,tag2|tag3,tag4|...} 구조에서 dress 태그가 포함된 부분 찾기
+    brace_pattern = r'\{([^}]*)\}'
+    matches = list(re.finditer(brace_pattern, char_value))
+    
+    for match in matches:
+        brace_content = match.group(1).strip()
+        if not brace_content:
+            continue
+        
+        # |로 분리된 각 부분 확인
+        parts = [p.strip() for p in brace_content.split('|')]
+        dress_parts = []
+        
+        for part in parts:
+            part_tags = [t.strip() for t in part.split(',') if t.strip()]
+            # 이 부분에 dress 태그가 있는지 확인
+            has_dress_tag = False
+            for tag in part_tags:
+                if TagProcessor.is_tag_excluded(tag, dress_tags):
+                    has_dress_tag = True
+                    break
+            
+            if has_dress_tag:
+                # dress 태그만 남기기
+                filtered_tags = [tag for tag in part_tags if TagProcessor.is_tag_excluded(tag, dress_tags)]
+                if filtered_tags:
+                    dress_parts.append(', '.join(filtered_tags))
+        
+        if dress_parts:
+            # {||} 구조 유지
+            return '|'.join(dress_parts)
+    
+    # {||} 구조가 아닌 일반 태그에서 dress 태그 추출 (단일 그룹)
+    dress_tag_list = TagProcessor.extract_dress_tags_from_string(char_value, dress_tags)
+    if dress_tag_list:
+        return ', '.join(dress_tag_list)
+    
+    return ''
 
 def merge_dress_tags(existing_tags: list, new_tags: list) -> list:
     """기존 dress 태그와 새로운 dress 태그를 병합합니다."""
@@ -106,31 +157,43 @@ def process_char_yml(yml_path: str, excluded_tags: list, dress_tags: list):
                     existing_dress_value = positive_dict.get('dress', '')
                     
                     if dress_tag_list:
-                        existing_dress_tags = []
+                        # 원본 char_value에서 dress 태그 구조 추출
+                        new_dress_structure = extract_dress_structure_from_char(char_value, dress_tags)
+                        
+                        # 기존 dress 필드 구조 추출
+                        existing_dress_structure = ''
                         if has_dress and existing_dress_value:
-                            existing_dress_tags = extract_tags_from_dress_field(existing_dress_value)
+                            existing_dress_structure = extract_dress_structure_from_field(existing_dress_value)
                         
-                        merged_dress_tags = merge_dress_tags(existing_dress_tags, dress_tag_list)
+                        # 구조 병합
+                        if existing_dress_structure and new_dress_structure:
+                            merged_structure = f'{existing_dress_structure}|{new_dress_structure}'
+                        elif new_dress_structure:
+                            merged_structure = new_dress_structure
+                        elif existing_dress_structure:
+                            merged_structure = existing_dress_structure
+                        else:
+                            merged_structure = ''
                         
-                        if merged_dress_tags:
-                            dress_tags_str = ', '.join(merged_dress_tags)
-                            dress_value = f'{{  {dress_tags_str} |4::__dress__}},'
+                        if merged_structure:
+                            dress_value = f'{{  {{{merged_structure}}}  |4::__dress__}},'
                         else:
                             dress_value = '{   |4::__dress__},'
                         
-                        if has_dress:
-                            if set(TagProcessor.normalize_tag(tag) for tag in merged_dress_tags) != \
-                               set(TagProcessor.normalize_tag(tag) for tag in existing_dress_tags):
-                                yml_data[key]['positive']['dress'] = dress_value
-                                modified_dress_count += 1
-                                if existing_dress_tags:
-                                    print(f"      → dress 필드 업데이트: 기존 {len(existing_dress_tags)}개 + 신규 {len(dress_tag_list)}개 → 총 {len(merged_dress_tags)}개 태그")
-                                else:
-                                    print(f"      → dress 필드 업데이트: {len(merged_dress_tags)}개 태그 추가")
-                        else:
+                        # 변경 여부 확인 (기존 구조와 비교)
+                        should_update = False
+                        if not has_dress:
+                            should_update = True
+                        elif existing_dress_structure != merged_structure:
+                            should_update = True
+                        
+                        if should_update:
                             yml_data[key]['positive']['dress'] = dress_value
                             modified_dress_count += 1
-                            print(f"      → dress 필드 추가: {len(merged_dress_tags)}개 태그")
+                            if existing_dress_structure:
+                                print(f"      → dress 필드 업데이트: 기존 구조 + 신규 구조 병합")
+                            else:
+                                print(f"      → dress 필드 추가: {len(dress_tag_list)}개 태그")
                     elif not has_dress:
                         yml_data[key]['positive']['dress'] = '{   |4::__dress__},'
                         modified_dress_count += 1
