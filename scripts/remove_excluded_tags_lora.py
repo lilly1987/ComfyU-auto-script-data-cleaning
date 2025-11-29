@@ -100,10 +100,10 @@ def process_type(type_name: str):
         # 모든 최상위 키에 대해 처리
         for k in list(orig.keys()):
             item = orig.get(k, {})
-            # skip 키가 없으면 '# skip: true' 주석 추가
+            # skip 키가 없으면 skip: false 추가
             if isinstance(item, dict) and 'skip' not in item:
                 try:
-                    orig.yaml_add_eol_comment('skip: true', k)
+                    item['skip'] = False
                 except Exception:
                     pass
 
