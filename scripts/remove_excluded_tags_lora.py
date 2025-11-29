@@ -35,6 +35,10 @@ def process_lora_yml(yml_path: str, excluded_tags: list):
         if not isinstance(value, dict):
             continue
         
+        # skip: true인 경우 처리 대상에서 제외
+        if value.get('skip', False):
+            continue
+        
         if 'positive' in value and isinstance(value['positive'], dict):
             positive_dict = value['positive']
             
@@ -92,6 +96,16 @@ def process_type(type_name: str):
                 orig = yaml.load(f) or {}
         except Exception:
             orig = {}
+
+        # 모든 최상위 키에 대해 처리
+        for k in list(orig.keys()):
+            item = orig.get(k, {})
+            # skip 키가 없으면 '# skip: true' 주석 추가
+            if isinstance(item, dict) and 'skip' not in item:
+                try:
+                    orig.yaml_add_eol_comment('skip: true', k)
+                except Exception:
+                    pass
 
         for k, removed_list in (modified_keys or {}).items():
             try:
