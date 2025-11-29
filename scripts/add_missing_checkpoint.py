@@ -21,24 +21,6 @@ types = config.get_types()
 # YAML 핸들러 생성
 yaml_handler = YAMLHandler(allow_duplicate_keys=True)
 
-TEMPLATE = """  steps:
-  - 30
-  cfg:
-  - 4.0
-  weight: 150
-  #negative:
-    #checkpoint: '  '
-    #realistic: ','
-    #quality: ' ,'
-  #positive:    
-    #checkpoint: ' ' 
-    #quality: ' ' 
-    #anime: '' 
-  sampler_name:
-  - euler_ancestral
-  #- dpmpp_2m
-  #- dpmpp_2m_sde"""
-
 def get_safetensors_files(checkpoint_path: str) -> set:
     """
     Checkpoint 디렉토리에서 모든 .safetensors 파일을 가져옵니다.
@@ -97,51 +79,33 @@ def add_missing_checkpoints(yml_path: str, checkpoint_path: str):
     
     print(f"  추가할 파일: {len(missing_files)}개")
     
-    # 추가할 파일들을 정렬하고 YAML에 추가
-    for filename in sorted(missing_files):
-        # 템플릿을 파싱하여 구조 생성
-        template_lines = TEMPLATE.strip().split('\n')
-        
-        # 딕셔너리 구조로 변환 (간단하게 처리)
-        yml_data[filename] = {
-            'steps': [30],
-            'cfg': [4.0],
-            'weight': 150,
-            'sampler_name': ['euler_ancestral']
-        }
-        
-        print(f"    - {filename} 추가")
-    
-    # 파일 저장
-    print(f"\n  YML 파일 저장 중...")
+    # 파일에 직접 추가 (주석 포함)
+    print(f"\n  YML 파일에 추가 중...")
     try:
-        # 원본 YAML을 로드해서 주석을 보존하면서 저장
-        yaml = yaml_handler.yaml
-        
-        # 원본을 로드 (주석 보존되는 CommentedMap)
-        try:
-            with open(yml_path, 'r', encoding='utf-8') as f:
-                orig = yaml.load(f) or {}
-        except Exception:
-            orig = {}
-        
-        # 추가할 파일들을 원본에 추가
-        for filename in sorted(missing_files):
-            orig[filename] = {
-                'steps': [30],
-                'cfg': [4.0],
-                'weight': 150,
-                'sampler_name': ['euler_ancestral']
-            }
-            # skip: true 주석 추가
-            try:
-                orig.yaml_add_eol_comment('skip: true', filename)
-            except Exception:
-                pass
-        
-        # 저장
-        with open(yml_path, 'w', encoding='utf-8') as f:
-            yaml.dump(orig, f)
+        with open(yml_path, 'a', encoding='utf-8') as f:
+            for filename in sorted(missing_files):
+                # 각 파일마다 템플릿 추가
+                f.write(f"'{filename}':\n")
+                f.write(f"  steps:\n")
+                f.write(f"  - 30\n")
+                f.write(f"  cfg:\n")
+                f.write(f"  - 4.0\n")
+                f.write(f"  weight: 150\n")
+                f.write(f"  #negative:\n")
+                f.write(f"    #checkpoint: '  '\n")
+                f.write(f"    #realistic: ','\n")
+                f.write(f"    #quality: ' ,'\n")
+                f.write(f"  #positive:\n")
+                f.write(f"    #checkpoint: ' '\n")
+                f.write(f"    #quality: ' '\n")
+                f.write(f"    #anime: ''\n")
+                f.write(f"  sampler_name:\n")
+                f.write(f"  - euler_ancestral\n")
+                f.write(f"  #- dpmpp_2m\n")
+                f.write(f"  #- dpmpp_2m_sde\n")
+                f.write(f"\n")
+                
+                print(f"    - {filename} 추가")
         
         print(f"  [OK] {len(missing_files)}개 파일이 추가되었습니다.")
     except Exception as e:
