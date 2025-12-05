@@ -26,7 +26,8 @@ template = {
     'positive': {
         'char': "1girl , ",
         'dress': "{   |4::__dress__},"
-    }
+    },
+    'skip': False
 }
 
 def process_type(type_name: str):
@@ -109,6 +110,7 @@ def process_type(type_name: str):
                 
                 # 파일에 추가
                 f.write(f'"{key}": # auto\n')
+                f.write(f'  skip: {template["skip"]}\n')
                 f.write(f'  weight: {template["weight"]}\n')
                 f.write(f'  positive:\n')
                 

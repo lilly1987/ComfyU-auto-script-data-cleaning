@@ -28,6 +28,7 @@ def create_template(key: str, tags: str = None) -> dict:
     """키에 대한 기본 템플릿을 생성합니다."""
     tag_value = tags if tags else " ,"
     return {
+        'skip': False,
         'tag': [],
         'positive': {
             key: tag_value
