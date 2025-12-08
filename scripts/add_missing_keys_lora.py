@@ -28,11 +28,11 @@ def create_template(key: str, tags: str = None) -> dict:
     """키에 대한 기본 템플릿을 생성합니다."""
     tag_value = tags if tags else " ,"
     return {
-        'skip': False,
         'tag': [],
         'positive': {
             key: tag_value
-        }
+        },
+        'skip': False,
     }
 
 def get_existing_keys_from_yml_files(lora_folder_path: str) -> set:

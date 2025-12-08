@@ -110,7 +110,6 @@ def process_type(type_name: str):
                 
                 # 파일에 추가
                 f.write(f'"{key}": # auto\n')
-                f.write(f'  skip: {template["skip"]}\n')
                 f.write(f'  weight: {template["weight"]}\n')
                 f.write(f'  positive:\n')
                 
@@ -132,6 +131,7 @@ def process_type(type_name: str):
                 
                 dress_value_escaped = dress_value.replace("'", "''")
                 f.write(f'    dress: \'{dress_value_escaped}\'\n')
+                f.write(f'  skip: {template["skip"]}\n')
                 f.write('\n')
         
         print(f"  [OK] {len(missing)}개의 누락된 키가 추가되었습니다.")

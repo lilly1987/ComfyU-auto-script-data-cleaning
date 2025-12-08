@@ -86,7 +86,6 @@ def add_missing_checkpoints(yml_path: str, checkpoint_path: str):
             for filename in sorted(missing_files):
                 # 각 파일마다 템플릿 추가
                 f.write(f"'{filename}':\n")
-                f.write(f"  skip: false\n")
                 f.write(f"  steps:\n")
                 f.write(f"  - 30\n")
                 f.write(f"  cfg:\n")
@@ -104,6 +103,7 @@ def add_missing_checkpoints(yml_path: str, checkpoint_path: str):
                 f.write(f"  - euler_ancestral\n")
                 f.write(f"  #- dpmpp_2m\n")
                 f.write(f"  #- dpmpp_2m_sde\n")
+                f.write(f"  skip: false\n")
                 f.write(f"\n")
                 
                 print(f"    - {filename} 추가")
