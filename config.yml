@@ -14,6 +14,7 @@ char:
     - '/cum .*/'
     - '/from .*/'
     - '/mole .*/'
+    - '/huge_breasts .*/'
     - '/holding .*/'
     - '/.* body/'
     - '/.* lights/'
@@ -37,6 +38,13 @@ char:
     - 'covered face'
     - 'weapon'
     - 'eyes closed'
+    - 'character name'
+    - 'copyright name'
+    - 'card parody'
+    - 'sun symbol'
+    - 'gem (symbol)'
+    - 'star (symbol)'
+    - 'card (medium)'
     - 'monochrome'
     - 'arms up'
     - 'comic'
@@ -73,7 +81,7 @@ char:
     - 'sitting'
     - 'one eye closed'
     - 'breasts out'
-    - 'large breasts'
+    - ''
     - 'mole'
     - 'mosaic censoring'
     - 'smile'
@@ -103,6 +111,7 @@ char:
   # dress 필드로 이동할 태그 목록
   # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
   dress_tags:
+    - 'zettai ryouiki'
     - 'hat'
     - 'side slit'
     - 'top'
