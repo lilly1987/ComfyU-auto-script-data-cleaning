@@ -51,6 +51,11 @@ def get_existing_keys_from_yml_files(lora_folder_path: str) -> set:
             continue
         
         yml_data = YAMLHandler.load_simple(yml_file)
+        if yml_data is None:
+            print(f"  [오류] YML 파일을 로드할 수 없습니다: {yml_file}")
+            print(f"  작업을 중단합니다.")
+            sys.exit(1)
+        
         if yml_data and isinstance(yml_data, dict):
             keys.update(yml_data.keys())
     
@@ -81,7 +86,12 @@ def process_type(type_name: str):
     print(f"  기존 yml 키 개수: {len(existing_keys)}개")
     
     # lora.yml에서 기존 키 추출
-    lora_yml_data = yaml_handler.load(lora_yml_path) or {}
+    lora_yml_data = yaml_handler.load(lora_yml_path)
+    if lora_yml_data is None:
+        print(f"  [오류] lora.yml 파일을 로드할 수 없습니다: {lora_yml_path}")
+        print(f"  작업을 중단합니다.")
+        sys.exit(1)
+    
     lora_yml_keys = set(lora_yml_data.keys()) if lora_yml_data else set()
     print(f"  lora.yml 키 개수: {len(lora_yml_keys)}개")
     

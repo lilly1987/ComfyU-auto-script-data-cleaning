@@ -55,8 +55,9 @@ def process_type(type_name: str):
             yml_data = yaml.safe_load(f)
             yml_keys = set(yml_data.keys()) if yml_data else set()
     except Exception as e:
-        print(f"  오류: YML 파일 읽기 실패: {e}")
-        return
+        print(f"  [오류] YML 파일 읽기 실패: {e}")
+        print(f"  작업을 중단합니다.")
+        sys.exit(1)
     
     print(f"  YML 키 개수: {len(yml_keys)}")
     

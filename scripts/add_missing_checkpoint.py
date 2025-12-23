@@ -58,8 +58,9 @@ def add_missing_checkpoints(yml_path: str, checkpoint_path: str):
     # YAML 로드
     yml_data = yaml_handler.load(yml_path)
     if yml_data is None:
-        print(f"  오류: YML 파일을 로드할 수 없습니다: {yml_path}")
-        return
+        print(f"  [오류] YML 파일을 로드할 수 없습니다: {yml_path}")
+        print(f"  작업을 중단합니다.")
+        sys.exit(1)
     
     # safetensors 파일 목록 가져오기
     safetensors_files = get_safetensors_files(checkpoint_path)
