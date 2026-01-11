@@ -51,7 +51,7 @@ class ConfigLoader:
 
     def get_base_dir(self) -> str:
         """(Deprecated) 기존 base_dir 값을 가져옵니다."""
-        return self.get('base_dir', r'W:\')
+        return self.get('base_dir', r'W:\\')
     
     def get_types(self) -> List[str]:
         """처리할 타입 리스트를 가져옵니다."""
