@@ -15,7 +15,8 @@ from utils import ConfigLoader, YAMLHandler
 
 # 설정 로드
 config = ConfigLoader()
-base_dir = config.get_base_dir()
+comfui_dir = config.get_comfui_dir()
+data_dir = config.get_data_dir()
 types = config.get_types()
 
 # YAML 핸들러 생성
@@ -138,8 +139,8 @@ def process_type(checkpoint_type: str):
     print(f"[{checkpoint_type}] 처리 시작")
     print(f"{'='*80}")
     
-    yml_path = os.path.join(base_dir, 'ComfyU-auto-script_data', checkpoint_type, 'checkpoint', 'checkpoint.yml')
-    safetensors_path = os.path.join(base_dir, 'ComfyUI', 'models', 'checkpoints', checkpoint_type)
+    yml_path = os.path.join(data_dir, checkpoint_type, 'checkpoint', 'checkpoint.yml')
+    safetensors_path = os.path.join(comfui_dir, 'models', 'checkpoints', checkpoint_type)
     
     if not os.path.exists(yml_path):
         print(f"  경고: YML 파일이 존재하지 않습니다: {yml_path}")

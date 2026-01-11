@@ -16,7 +16,8 @@ from utils import ConfigLoader, TagProcessor, SafeTensorsReader, YAMLHandler
 
 # 설정 로드
 config = ConfigLoader()
-base_dir = config.get_base_dir()
+comfui_dir = config.get_comfui_dir()
+data_dir = config.get_data_dir()
 types = config.get_types()
 excluded_tags = config.get_excluded_tags('lora')
 max_tags = config.get_max_tags('lora')
@@ -67,8 +68,8 @@ def process_type(type_name: str):
     print(f"[{type_name}] 처리 시작")
     print(f"{'='*80}")
     
-    safetensors_folder = os.path.join(base_dir, 'ComfyUI', 'models', 'loras', type_name, 'etc')
-    lora_folder = os.path.join(base_dir, 'ComfyU-auto-script_data', type_name, 'lora')
+    safetensors_folder = os.path.join(comfui_dir, 'models', 'loras', type_name, 'etc')
+    lora_folder = os.path.join(data_dir, type_name, 'lora')
     lora_yml_path = os.path.join(lora_folder, 'lora.yml')
     
     # safetensors 파일에서 키 추출

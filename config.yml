@@ -1,5 +1,7 @@
 # --- 경로 설정 ---
-base_dir: W:\ComfyUI_windows_portable  # 작업 디렉토리
+base_dir: 'W:\'  # (deprecated) 작업 디렉토리, 기본값의 루트 디렉토리로 사용됩니다
+comfui_dir: 'W:\ComfyUI_windows_portable'  # ComfyUI 설치 디렉토리 (get_comfui_dir)
+data_dir: 'W:\ComfyU-auto-script_data'     # 데이터 디렉토리 (get_data_dir)
 
 # --- 처리할 타입 리스트 ---
 types:
@@ -23,6 +25,7 @@ char:
     - '/.* armor/'
     - '/.* horns/'
     - '/.*hands up.*/'
+    - '/.*epaulettes.*/'
     - '/.*megaphone.*/'
     - '/.*blindfold.*/'
     - '/.*goggles.*/'
@@ -184,6 +187,7 @@ lora:
     - '/.* eyes/'
     - '/.* background/'
     - '/.*blindfold.*/'
+    - '/.*epaulettes.*/'
     - '/.*handbag.*/'
     - '/.*nude.*/'
     - 'looking at viewer'

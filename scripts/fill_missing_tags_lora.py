@@ -21,7 +21,8 @@ from utils import (  # noqa: E402
 
 # 설정 로드
 config = ConfigLoader()
-base_dir = config.get_base_dir()
+comfui_dir = config.get_comfui_dir()
+data_dir = config.get_data_dir()
 types = config.get_types()
 
 # YAML 핸들러 생성
@@ -33,7 +34,7 @@ excluded_tags = config.get_excluded_tags('tag')
 
 # safetensors가 위치한 기본 폴더(ComfyUI/models/loras/<type>/etc)
 def get_safetensors_folder(type_name: str) -> str:
-    return os.path.join(base_dir, 'ComfyUI', 'models', 'loras', type_name, 'etc')
+    return os.path.join(comfui_dir, 'models', 'loras', type_name, 'etc')
 
 
 def should_fill_tag(tag_value: Any) -> bool:
@@ -130,7 +131,7 @@ def process_type(type_name: str):
     print(f"[{type_name}] tag 자동 생성")
     print(f"{'=' * 80}")
 
-    lora_dir = os.path.join(base_dir, 'ComfyU-auto-script_data', type_name, 'lora')
+    lora_dir = os.path.join(data_dir, type_name, 'lora')
     if not os.path.isdir(lora_dir):
         print(f"  경고: 폴더를 찾을 수 없습니다: {lora_dir}")
         return

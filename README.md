@@ -73,7 +73,8 @@ python scripts/remove_excluded_tags_lora.py
 ## 설정 파일 구조
 
 ```yaml
-base_dir: W:\ComfyUI_windows_portable  # 작업 디렉토리
+comfui_dir: W:\ComfyUI_windows_portable  # ComfyUI 설치 디렉토리
+data_dir: W:\ComfyU-auto-script_data     # 스크립트 데이터 디렉토리
 types:                                  # 처리할 타입 리스트
   - IL
   - Pony

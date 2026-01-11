@@ -41,9 +41,17 @@ class ConfigLoader:
         """설정 값을 가져옵니다."""
         return self._config.get(key, default)
     
+    def get_comfui_dir(self) -> str:
+        """ComfyUI 설치 디렉토리를 가져옵니다."""
+        return self.get('comfui_dir', r'W:\ComfyUI_windows_portable')
+
+    def get_data_dir(self) -> str:
+        """데이터 디렉토리를 가져옵니다 (ComfyU-auto-script_data 기본값)."""
+        return self.get('data_dir', r'W:\ComfyU-auto-script_data')
+
     def get_base_dir(self) -> str:
-        """작업 디렉토리를 가져옵니다."""
-        return self.get('base_dir', r'W:\ComfyUI_windows_portable')
+        """(Deprecated) 기존 base_dir 값을 가져옵니다."""
+        return self.get('base_dir', r'W:\')
     
     def get_types(self) -> List[str]:
         """처리할 타입 리스트를 가져옵니다."""

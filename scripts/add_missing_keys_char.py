@@ -14,7 +14,8 @@ from utils import ConfigLoader, TagProcessor, SafeTensorsReader
 
 # 설정 로드
 config = ConfigLoader()
-base_dir = config.get_base_dir()
+comfui_dir = config.get_comfui_dir()
+data_dir = config.get_data_dir()
 types = config.get_types()
 excluded_tags = config.get_excluded_tags('char')
 dress_tags = config.get_dress_tags()
@@ -36,8 +37,8 @@ def process_type(type_name: str):
     print(f"[{type_name}] 처리 시작")
     print(f"{'='*80}")
     
-    folder_path = os.path.join(base_dir, 'ComfyUI', 'models', 'loras', type_name, 'char')
-    yml_path = os.path.join(base_dir, 'ComfyU-auto-script_data', type_name, 'lora', 'char.yml')
+    folder_path = os.path.join(comfui_dir, 'models', 'loras', type_name, 'char')
+    yml_path = os.path.join(data_dir, type_name, 'lora', 'char.yml')
     
     if not os.path.exists(folder_path):
         print(f"  경고: 폴더가 존재하지 않습니다: {folder_path}")

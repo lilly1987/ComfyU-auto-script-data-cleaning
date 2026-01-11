@@ -15,7 +15,8 @@ from utils import ConfigLoader, TagProcessor, YAMLHandler
 
 # 설정 로드
 config = ConfigLoader()
-base_dir = config.get_base_dir()
+comfui_dir = config.get_comfui_dir()
+data_dir = config.get_data_dir()
 types = config.get_types()
 excluded_tags = config.get_excluded_tags('char')
 dress_tags = config.get_dress_tags()
@@ -237,7 +238,7 @@ def process_type(type_name: str):
     print(f"[{type_name}] 처리 시작")
     print(f"{'='*80}")
     
-    yml_path = os.path.join(base_dir, 'ComfyU-auto-script_data', type_name, 'lora', 'char.yml')
+    yml_path = os.path.join(data_dir, type_name, 'lora', 'char.yml')
     
     if not excluded_tags:
         print(f"  경고: 제외 태그 목록이 비어있습니다.")
