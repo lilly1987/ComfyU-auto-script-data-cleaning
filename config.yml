@@ -28,6 +28,7 @@ char:
     - '/.*epaulettes.*/'
     - '/.*megaphone.*/'
     - '/.*blindfold.*/'
+    - '/.*hood.*/'
     - '/.*goggles.*/'
     - '/.*crossed arms.*/'
     - '/.*umbrella.*/'
@@ -189,6 +190,7 @@ lora:
     - '/.*blindfold.*/'
     - '/.*epaulettes.*/'
     - '/.*handbag.*/'
+    - '/.*hood.*/'
     - '/.*nude.*/'
     - 'looking at viewer'
     - 'monochrome'
@@ -222,4 +224,5 @@ tag:
     - '1girl'
     - '1 girl'
     - 'censored'
+    - 'hood'
 
