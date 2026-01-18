@@ -9,7 +9,11 @@ import glob
 import hashlib
 import threading
 import signal
+import shutil
+import yaml
 from typing import Dict, Optional
+from collections import defaultdict
+from datetime import datetime
 
 # 스크립트 디렉토리를 Python 경로에 추가
 script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -48,12 +52,36 @@ def calculate_sha256(file_path: str, chunk_size: int = 65536) -> Optional[str]:
 def load_existing_sha256(output_path: str, yaml_handler: YAMLHandler) -> Dict[str, str]:
     """기존 YAML 파일에서 SHA256 정보를 로드합니다."""
     if os.path.exists(output_path):
+        # 파일 크기 확인 (빈 파일은 건너뛰기)
+        file_size = os.path.getsize(output_path)
+        if file_size == 0:
+            print(f"  ⚠️  빈 YAML 파일: {output_path}")
+            return {}
+        
         try:
-            data = yaml_handler.load(output_path)
+            # 먼저 yaml.safe_load로 안전하게 로드 시도
+            with open(output_path, 'r', encoding='utf-8') as f:
+                data = yaml.safe_load(f)
+            
             if isinstance(data, dict):
                 return data
+            elif data is None:
+                print(f"  ⚠️  YAML 파일이 비어있음: {output_path}")
+                return {}
+                
         except Exception as e:
-            print(f"  경고: 기존 파일 읽기 실패 - {e}")
+            # yaml.safe_load 실패 시 백업 생성
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_path = f"{output_path}.backup_{timestamp}"
+            try:
+                shutil.copy2(output_path, backup_path)
+                print(f"  ⚠️  YAML 파일 읽기 오류: {type(e).__name__}: {e}")
+                print(f"  💾 손상된 파일 백업 생성: {backup_path}")
+                print(f"  🔄 새로 생성하여 작업을 계속합니다...")
+            except Exception as backup_error:
+                print(f"  ❌ YAML 파일 읽기 실패: {type(e).__name__}: {e}")
+                print(f"  ⚠️  백업 생성 실패: {backup_error}")
+                print(f"  🔄 새로 생성하여 작업을 계속합니다...")
     return {}
 
 
@@ -106,6 +134,18 @@ def get_safetensors_sha256(folder_dir: str, existing_sha256: Dict[str, str],
     return sha256_dict
 
 
+def find_duplicate_hashes(sha256_dict: Dict[str, str]) -> Dict[str, list]:
+    """중복된 해시값을 찾아 {해시: [파일들]} 형태로 반환합니다."""
+    hash_to_files = defaultdict(list)
+    
+    for filename, hash_value in sha256_dict.items():
+        hash_to_files[hash_value].append(filename)
+    
+    # 중복된 것만 필터링
+    duplicates = {hash_val: files for hash_val, files in hash_to_files.items() if len(files) > 1}
+    return duplicates
+
+
 def save_sha256_yaml(sha256_dict: Dict[str, str], output_path: str, yaml_handler: YAMLHandler) -> bool:
     """SHA256 딕셔너리를 YAML 파일로 저장합니다."""
     try:
@@ -124,13 +164,41 @@ def save_sha256_yaml(sha256_dict: Dict[str, str], output_path: str, yaml_handler
         return False
 
 
+def save_duplicate_hashes_yaml(sha256_dict: Dict[str, str], output_path: str, yaml_handler: YAMLHandler) -> bool:
+    """중복 해시를 {해시: [파일들]} 형태로 YAML 파일에 저장합니다."""
+    duplicates = find_duplicate_hashes(sha256_dict)
+    
+    if not duplicates:
+        # 중복이 없으면 기존 파일 삭제 시도
+        if os.path.exists(output_path):
+            try:
+                os.remove(output_path)
+                print(f"  중복 해시 없음: {output_path} 삭제")
+            except Exception as e:
+                print(f"  경고: 파일 삭제 실패 - {e}")
+        return True
+    
+    try:
+        output_dir = os.path.dirname(output_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+        
+        # {해시: [파일들]} 형태로 저장
+        yaml_handler.save(output_path, duplicates)
+        print(f"  저장 완료: {output_path} ({len(duplicates)}개 중복 그룹)")
+        return True
+    except Exception as e:
+        print(f"  오류: 중복 해시 저장 실패 - {e}")
+        return False
+
+
 def process_lora(type_name: str, config: ConfigLoader, yaml_handler: YAMLHandler):
     """LoRA 파일을 처리합니다 (별도 스레드)."""
     try:
         comfui_dir = config.get_comfui_dir()
         data_dir = config.get_data_dir()
         
-        lora_dir = os.path.join(comfui_dir,   'models', 'loras', type_name, 'etc')
+        lora_dir = os.path.join(comfui_dir, 'models', 'loras', type_name, 'etc')
         lora_output_yaml = os.path.join(data_dir, type_name, 'sha256_loras.yml')
         
         print(f"\n[LoRA] {type_name} 처리 시작")
@@ -151,6 +219,9 @@ def process_lora(type_name: str, config: ConfigLoader, yaml_handler: YAMLHandler
         # 최종 저장
         if lora_sha256_dict:
             save_sha256_yaml(lora_sha256_dict, lora_output_yaml, yaml_handler)
+            # 중복 해시 저장
+            lora_dup_output = lora_output_yaml.replace('sha256_loras.yml', 'sha256_loras_duplicates.yml')
+            save_duplicate_hashes_yaml(lora_sha256_dict, lora_dup_output, yaml_handler)
             print(f"[LoRA] {type_name} 처리 완료")
         else:
             print(f"[LoRA] {type_name}: 처리할 파일이 없습니다.")
@@ -165,7 +236,7 @@ def process_checkpoint(type_name: str, config: ConfigLoader, yaml_handler: YAMLH
         comfui_dir = config.get_comfui_dir()
         data_dir = config.get_data_dir()
         
-        checkpoint_dir = os.path.join(comfui_dir,  'models', 'checkpoints', type_name)
+        checkpoint_dir = os.path.join(comfui_dir, 'models', 'checkpoints', type_name)
         checkpoint_output_yaml = os.path.join(data_dir, type_name, 'sha256_checkpoints.yml')
         
         print(f"\n[Checkpoint] {type_name} 처리 시작")
@@ -186,6 +257,9 @@ def process_checkpoint(type_name: str, config: ConfigLoader, yaml_handler: YAMLH
         # 최종 저장
         if checkpoint_sha256_dict:
             save_sha256_yaml(checkpoint_sha256_dict, checkpoint_output_yaml, yaml_handler)
+            # 중복 해시 저장
+            checkpoint_dup_output = checkpoint_output_yaml.replace('sha256_checkpoints.yml', 'sha256_checkpoints_duplicates.yml')
+            save_duplicate_hashes_yaml(checkpoint_sha256_dict, checkpoint_dup_output, yaml_handler)
             print(f"[Checkpoint] {type_name} 처리 완료")
         else:
             print(f"[Checkpoint] {type_name}: 처리할 파일이 없습니다.")
