@@ -192,6 +192,43 @@ def save_duplicate_hashes_yaml(sha256_dict: Dict[str, str], output_path: str, ya
         return False
 
 
+def process_char(type_name: str, config: ConfigLoader, yaml_handler: YAMLHandler):
+    """LoRA 파일을 처리합니다 (별도 스레드)."""
+    try:
+        comfui_dir = config.get_comfui_dir()
+        data_dir = config.get_data_dir()
+        
+        lora_dir = os.path.join(comfui_dir, 'models', 'loras', type_name, 'char')
+        lora_output_yaml = os.path.join(data_dir, type_name, 'sha256_char.yml')
+        
+        print(f"\n[char] {type_name} 처리 시작")
+        print(f"  원본 경로: {lora_dir}")
+        print(f"  저장 경로: {lora_output_yaml}")
+        
+        # 기존 데이터 로드
+        existing_loras = load_existing_sha256(lora_output_yaml, yaml_handler)
+        if existing_loras:
+            print(f"  기존 데이터 로드: {len(existing_loras)}개")
+        
+        # SHA256 계산
+        print("  SHA256 계산 중...")
+        lora_sha256_dict = get_safetensors_sha256(
+            lora_dir, existing_loras, yaml_handler, lora_output_yaml
+        )
+        
+        # 최종 저장
+        if lora_sha256_dict:
+            save_sha256_yaml(lora_sha256_dict, lora_output_yaml, yaml_handler)
+            # 중복 해시 저장
+            lora_dup_output = lora_output_yaml.replace('sha256_char.yml', 'sha256_char_duplicates.yml')
+            save_duplicate_hashes_yaml(lora_sha256_dict, lora_dup_output, yaml_handler)
+            print(f"[char] {type_name} 처리 완료")
+        else:
+            print(f"[char] {type_name}: 처리할 파일이 없습니다.")
+    
+    except Exception as e:
+        print(f"[char] {type_name} 처리 중 오류: {e}")
+
 def process_lora(type_name: str, config: ConfigLoader, yaml_handler: YAMLHandler):
     """LoRA 파일을 처리합니다 (별도 스레드)."""
     try:
@@ -296,6 +333,15 @@ def main():
     
     # 각 타입별로 LoRA와 Checkpoint를 병렬로 처리
     for type_name in types:
+        # LoRA 스레드
+        char_thread = threading.Thread(
+            target=process_char,
+            args=(type_name, config, yaml_handler),
+            name=f"Char-{type_name}"
+        )
+        threads.append(char_thread)
+        char_thread.start()
+
         # LoRA 스레드
         lora_thread = threading.Thread(
             target=process_lora,

@@ -2,7 +2,7 @@ WeightLora.yml 등록 현황 검사 보고서
 ============================================================
 
 타입: IL
-등록되지 않은 LoRA: 45개
+등록되지 않은 LoRA: 47개
 
 파일 목록:
   - Boy_Sandwich_V2-000011
@@ -12,25 +12,24 @@ WeightLora.yml 등록 현황 검사 보고서
   - ILPOV_v1
   - IL_J_unk2300 Style
   - IL_spitroast_test
-  - LLTDR110503264142wa
+  - 
+  - MissPixel1 - Tulip
   - Pearly_breeding_mount
   - Piddlefours__Pet_Play_Human_Dog_Petgirl_PonyILSDSDXL
   - Ponygirl_Illustrious
   - Ponyplay_Illustrious
-  - Public_Sex_Machine_v2-000003
+  - 
   - Shaobayan2-11
   - Slave auction-IL_NAI_PY
-  - SweetIdolCollegeSGILL
-  - TheheavenpitIllustrious
-  - breast-sucking-sex-from-behind-v2-illustriousxl-lora-nochekaiser
-  - bus guide_illustrious_V1.0
-  - cross-section_vaginal_C_iLL_v2
+  - 
   - cross_ch
   - daram_style
   - dresses
-  - futa_on_femaledickgirl_and_female-000007
+  - 
+  - hle
   - hogtieillusxl15
   - kneejob_V2
+  - kousaki
   - leaning_back_cowgirl_ilxl_v1
   - lebanne_(pokemon)_(clothes)_ILXL
   - legupXLNAI
@@ -38,10 +37,9 @@ WeightLora.yml 등록 현황 검사 보고서
   - mai_bjnun
   - mai_black_jacket
   - mai_lace-trimmed
-  - michihasu
-  - multiple-boys-v4-illustriousxl-lora-nochekaiser
-  - navel fuck_illustrious_V1.0
-  - royalemeraldlolitadressIL
+  - 
+  - 
+  - 
   - shishimai_illustrious_V1.0
   - slime_mon_illustrious
   - slime_transforms
