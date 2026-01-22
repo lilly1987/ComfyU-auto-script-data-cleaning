@@ -2,52 +2,8 @@ WeightLora.yml 등록 현황 검사 보고서
 ============================================================
 
 타입: IL
-등록되지 않은 LoRA: 47개
-
-파일 목록:
-  - Boy_Sandwich_V2-000011
-  - HFSP-V1.0-000014
-  - Humanoid_Larvae_Monster_-_Green_Creep_goblin_size
-  - IL-vs-WorldLinkRin01_frockpt1_th-3.5
-  - ILPOV_v1
-  - IL_J_unk2300 Style
-  - IL_spitroast_test
-  - 
-  - MissPixel1 - Tulip
-  - Pearly_breeding_mount
-  - Piddlefours__Pet_Play_Human_Dog_Petgirl_PonyILSDSDXL
-  - Ponygirl_Illustrious
-  - Ponyplay_Illustrious
-  - 
-  - Shaobayan2-11
-  - Slave auction-IL_NAI_PY
-  - 
-  - cross_ch
-  - daram_style
-  - dresses
-  - 
-  - hle
-  - hogtieillusxl15
-  - kneejob_V2
-  - kousaki
-  - leaning_back_cowgirl_ilxl_v1
-  - lebanne_(pokemon)_(clothes)_ILXL
-  - legupXLNAI
-  - mai_bj_clothing_sexy_school
-  - mai_bjnun
-  - mai_black_jacket
-  - mai_lace-trimmed
-  - 
-  - 
-  - 
-  - shishimai_illustrious_V1.0
-  - slime_mon_illustrious
-  - slime_transforms
-  - straddling-kiss-v2-illustriousxl-lora-nochekaiser
-  - superhipwaist-illust
-  - trainingpad-locon-came
-  - vspo_idol_outfit-08
-  - 五花v1
+등록되지 않은 LoRA: 0개
+(없음)
 
 ------------------------------------------------------------
 
