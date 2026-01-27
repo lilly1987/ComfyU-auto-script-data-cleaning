@@ -2,8 +2,43 @@ WeightLora.yml 등록 현황 검사 보고서
 ============================================================
 
 타입: IL
-등록되지 않은 LoRA: 0개
-(없음)
+등록되지 않은 LoRA: 34개
+
+파일 목록:
+  - BDSM_kit_-_ILL
+  - Crane Embroidery Gradient Hanfu-Inspired Dress Set_IL_v1.0
+  - Escoffier__genshin_impact_clothes_style
+  - FrogtieBondage
+  - GlitterWeddingDressWhiteShawlILL
+  - LongoneslitqipaoIL
+  - LoveDeepspaceMCMistseaLamentSkinCosplayDressILL
+  - MGCODR-10
+  - Mint Panda Maid Dress Set_IL_v1.0
+  - Peach Blossom Kimono-Inspired Dress_IL_v1.0
+  - Rin_String
+  - Standing_Double_Penetration-000002
+  - after-sex-v3-illustriousxl-lora-nochekaiser
+  - fallenmoonrulejacketIL
+  - foldedfloorbondage
+  - from_behind_bondage
+  - kosewad-000068
+  - missionary-v3-illustriousxl-lora-nochekaiser
+  - missionary-v4-illustriousxl-lora-nochekaiser
+  - offshoulderblouse
+  - pet-play-illustriousxl-lora-nochekaiser
+  - pet-play-v2-illustriousxl-lora-nochekaiser
+  - prone-bone-from-side-illustriousxl-lora-nochekaiser
+  - prone-bone-from-side-v2-illustriousxl-lora-nochekaiser
+  - prone-bone-from-side-v3-illustriousxl-lora-nochekaiser
+  - prone-bone-from-side-v4-illustriousxl-lora-nochekaiser
+  - spitroast-illustriousxl-lora-nochekaiser
+  - spitroast-v2-illustriousxl-lora-nochekaiser
+  - spitroast-v6-illustriousxl-lora-nochekaiser
+  - standing-sex-v3-illustriousxl-lora-nochekaiser
+  - stomach-bulge-illustriousxl-lora-nochekaiser
+  - stomach-bulge-v2-illustriousxl-lora-nochekaiser
+  - stomach-bulge-v3-illustriousxl-lora-nochekaiser
+  - strangling-on-stomach-v3-illustriousxl-lora-nochekaiser
 
 ------------------------------------------------------------
 

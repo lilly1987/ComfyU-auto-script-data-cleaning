@@ -19,6 +19,7 @@ char:
     - '/huge_breasts .*/'
     - '/holding .*/'
     - '/.*headphones.*/'
+    - '/.*bandaid .*/'
     - '/.*censor.*/'
     - '/.*hands up.*/'
     - '/.*epaulettes.*/'
@@ -193,6 +194,7 @@ lora:
     - '/.*epaulettes.*/'
     - '/.*headphones.*/'
     - '/.*handbag.*/'
+    - '/.*bandaid .*/'
     - '/.*hood.*/'
     - '/.*censor.*/'
     - '/.*nude.*/'
@@ -224,6 +226,7 @@ tag:
   # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
   excluded_tags:
     - 'identity censor'
+    - 'bandaid '
     - 'solo'
     - 'covered face'
     - '/.*headphones.*/'
