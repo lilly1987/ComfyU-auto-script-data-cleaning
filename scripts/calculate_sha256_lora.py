@@ -114,7 +114,7 @@ def get_safetensors_sha256(folder_dir: str, existing_sha256: Dict[str, str],
         
         # 이미 계산된 파일 건너띄기
         if name_without_ext in existing_sha256:
-            print(f"    [{idx}/{total_files}] {name_without_ext} (기존)")
+            # print(f"    [{idx}/{total_files}] {name_without_ext} (기존)")
             continue
         
         # SHA256 계산

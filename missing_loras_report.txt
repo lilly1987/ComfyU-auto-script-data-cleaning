@@ -2,10 +2,12 @@ WeightLora.yml 등록 현황 검사 보고서
 ============================================================
 
 타입: IL
-등록되지 않은 LoRA: 34개
+등록되지 않은 LoRA: 37개
 
 파일 목록:
+  - Astral_Casting_Doublet_Chivalric_Doublet_of_HealingCasting_-_Astral_Silk_Doublet_of_HealingCasting-000015
   - BDSM_kit_-_ILL
+  - CohanaIllustrious
   - Crane Embroidery Gradient Hanfu-Inspired Dress Set_IL_v1.0
   - Escoffier__genshin_impact_clothes_style
   - FrogtieBondage
@@ -14,9 +16,10 @@ WeightLora.yml 등록 현황 검사 보고서
   - LoveDeepspaceMCMistseaLamentSkinCosplayDressILL
   - MGCODR-10
   - Mint Panda Maid Dress Set_IL_v1.0
-  - Peach Blossom Kimono-Inspired Dress_IL_v1.0
+  - RetennIllustrious
   - Rin_String
   - Standing_Double_Penetration-000002
+  - YaoyaobaeIllustrious
   - after-sex-v3-illustriousxl-lora-nochekaiser
   - fallenmoonrulejacketIL
   - foldedfloorbondage
