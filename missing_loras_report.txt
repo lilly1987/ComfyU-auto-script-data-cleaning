@@ -2,7 +2,7 @@ WeightLora.yml 등록 현황 검사 보고서
 ============================================================
 
 타입: IL
-등록되지 않은 LoRA: 38개
+등록되지 않은 LoRA: 41개
 
 파일 목록:
   - Astral_Casting_Doublet_Chivalric_Doublet_of_HealingCasting_-_Astral_Silk_Doublet_of_HealingCasting-000015
@@ -12,6 +12,8 @@ WeightLora.yml 등록 현황 검사 보고서
   - Escoffier__genshin_impact_clothes_style
   - FrogtieBondage
   - GlitterWeddingDressWhiteShawlILL
+  - High_Carry_Position
+  - KAKA ozisan-000016
   - LongoneslitqipaoIL
   - LoveDeepspaceMCMistseaLamentSkinCosplayDressILL
   - MGCODR-10
@@ -39,6 +41,7 @@ WeightLora.yml 등록 현황 검사 보고서
   - spitroast-v2-illustriousxl-lora-nochekaiser
   - spitroast-v6-illustriousxl-lora-nochekaiser
   - standing-sex-v3-illustriousxl-lora-nochekaiser
+  - standing_splitProdigy_Illustrious
   - stomach-bulge-illustriousxl-lora-nochekaiser
   - stomach-bulge-v2-illustriousxl-lora-nochekaiser
   - stomach-bulge-v3-illustriousxl-lora-nochekaiser
