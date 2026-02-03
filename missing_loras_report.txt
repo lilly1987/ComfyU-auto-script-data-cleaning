@@ -2,7 +2,7 @@ WeightLora.yml 등록 현황 검사 보고서
 ============================================================
 
 타입: IL
-등록되지 않은 LoRA: 41개
+등록되지 않은 LoRA: 42개
 
 파일 목록:
   - Astral_Casting_Doublet_Chivalric_Doublet_of_HealingCasting_-_Astral_Silk_Doublet_of_HealingCasting-000015
@@ -37,6 +37,7 @@ WeightLora.yml 등록 현황 검사 보고서
   - prone-bone-from-side-v2-illustriousxl-lora-nochekaiser
   - prone-bone-from-side-v3-illustriousxl-lora-nochekaiser
   - prone-bone-from-side-v4-illustriousxl-lora-nochekaiser
+  - sellfishu_v1
   - spitroast-illustriousxl-lora-nochekaiser
   - spitroast-v2-illustriousxl-lora-nochekaiser
   - spitroast-v6-illustriousxl-lora-nochekaiser
