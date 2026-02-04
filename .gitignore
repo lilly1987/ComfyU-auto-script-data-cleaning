@@ -1,2 +1,3 @@
 *.pyc
 missing_loras_report.txt
+*.txt
