@@ -2,54 +2,8 @@ WeightLora.yml 등록 현황 검사 보고서
 ============================================================
 
 타입: IL
-등록되지 않은 LoRA: 45개
-
-파일 목록:
-  - Astral_Casting_Doublet_Chivalric_Doublet_of_HealingCasting_-_Astral_Silk_Doublet_of_HealingCasting-000015
-  - BDSM_kit_-_ILL
-  - CohanaIllustrious
-  - Crane Embroidery Gradient Hanfu-Inspired Dress Set_IL_v1.0
-  - DogmaV9.2-000021
-  - Escoffier__genshin_impact_clothes_style
-  - FrogtieBondage
-  - GlitterWeddingDressWhiteShawlILL
-  - High_Carry_Position
-  - KAKA ozisan-000016
-  - LongoneslitqipaoIL
-  - LoveDeepspaceMCMistseaLamentSkinCosplayDressILL
-  - MGCODR-10
-  - Mint Panda Maid Dress Set_IL_v1.0
-  - RetennIllustrious
-  - Rin_String
-  - Standing_Double_Penetration-000002
-  - VtorichnayaIllustrious
-  - YaoyaobaeIllustrious
-  - after-sex-v3-illustriousxl-lora-nochekaiser
-  - fallenmoonrulejacketIL
-  - foldedfloorbondage
-  - from_behind_bondage
-  - kosewad-000068
-  - missionary-v3-illustriousxl-lora-nochekaiser
-  - missionary-v4-illustriousxl-lora-nochekaiser
-  - mxj2-000007
-  - offshoulderblouse
-  - pet-play-illustriousxl-lora-nochekaiser
-  - pet-play-v2-illustriousxl-lora-nochekaiser
-  - prone-bone-from-side-illustriousxl-lora-nochekaiser
-  - prone-bone-from-side-v2-illustriousxl-lora-nochekaiser
-  - prone-bone-from-side-v3-illustriousxl-lora-nochekaiser
-  - prone-bone-from-side-v4-illustriousxl-lora-nochekaiser
-  - spitroast-illustriousxl-lora-nochekaiser
-  - spitroast-v2-illustriousxl-lora-nochekaiser
-  - spitroast-v6-illustriousxl-lora-nochekaiser
-  - standing-sex-v3-illustriousxl-lora-nochekaiser
-  - standing_splitProdigy_Illustrious
-  - stomach-bulge-illustriousxl-lora-nochekaiser
-  - stomach-bulge-v2-illustriousxl-lora-nochekaiser
-  - stomach-bulge-v3-illustriousxl-lora-nochekaiser
-  - strangling-on-stomach-v3-illustriousxl-lora-nochekaiser
-  - suzuame_style
-  - 明暗对比加强
+등록되지 않은 LoRA: 0개
+(없음)
 
 ------------------------------------------------------------
 
