@@ -2,8 +2,22 @@ WeightLora.yml 등록 현황 검사 보고서
 ============================================================
 
 타입: IL
-등록되지 않은 LoRA: 0개
-(없음)
+등록되지 않은 LoRA: 13개
+
+파일 목록:
+  - AF_UrbanObelisk_Perambulation_ILL
+  - AF_UrbanObelisk_Rose_ILL
+  - AF_UrbanObelisk_Slash_ILL
+  - AF_UrbanObelisk_Slingback_ILL
+  - AF_UrbanObelisk_Veil_ILL
+  - AF_Urban_Obelisk_Titanium_ILL
+  - Bunny Hooded Faux Fur Coat & Lock-Print Dress_IL_v1.0
+  - CBG-SDGB-V1.0-000012
+  - Chinese Zombie-Themed Dress Set_IL_v1.0
+  - Creamy Lace Bell-Sleeve Top & Blue Denim Hot Pants Coord_IL_v1.0
+  - Green & Yellow Ruffle Maid Dress_IL_v1.0
+  - Lace Trim Halter Top & Pink Tiered Ruffle Skirt Set_IL_v1.0
+  - Pink Cow Print Frilly Bunny Maid Dress_IL_v1.0
 
 ------------------------------------------------------------
 
