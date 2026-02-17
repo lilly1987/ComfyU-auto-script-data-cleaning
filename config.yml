@@ -14,8 +14,7 @@ char:
   # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
   excluded_tags:
     - '/cum .*/'
-    - '/from .*/'
-    - '/mole .*/'
+    - '/from .*/' 
     - '/huge_breasts .*/'
     - '/holding .*/'
     - '/.*headphones.*/'
@@ -26,6 +25,7 @@ char:
     - '/.*epaulettes.*/'
     - '/.*megaphone.*/'
     - '/.*blindfold.*/'
+    - '/.*mole.*/'
     - '/.*hood.*/'
     - '/.*goggles.*/'
     - '/.*crossed arms.*/'
@@ -197,6 +197,7 @@ lora:
     - '/.*armor.*/'
     - '/.*handbag.*/'
     - '/.*bandaid .*/'
+    - '/.*mole.*/'
     - '/.*hood.*/'
     - '/.*censor.*/'
     - '/.*nude.*/'
@@ -231,6 +232,7 @@ tag:
     - 'bandaid '
     - 'solo'
     - 'covered face'
+    - '/.*mole.*/'
     - '/.*armor.*/'
     - '/.*headphones.*/'
     - '1girl'
