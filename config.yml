@@ -125,6 +125,7 @@ char:
     - 'hat'
     - 'side slit'
     - 'top'
+    - '/.*apron.*/'
     - '/.* top.*/'
     - '/.* coat.*/'
     - '/.* footwear.*/'
