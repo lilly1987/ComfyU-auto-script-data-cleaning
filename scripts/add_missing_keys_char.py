@@ -24,10 +24,10 @@ max_tags = 64
 # 기본 템플릿
 template = {
     'skip': False,
-    'weight': 150,
+    'weight': 3,
     'positive': {
-        'char': "1girl , ",
-        'dress': "{   |4::__dress__},"
+        'char': " ",
+        'dress': "{   |8::__dress__},"
     },
 }
 

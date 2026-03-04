@@ -89,7 +89,7 @@ def add_missing_checkpoints(yml_path: str, checkpoint_path: str):
                 # 각 파일마다 템플릿 추가
                 f.write(f"'{filename}':\n")
                 f.write(f"  skip: false\n")
-                f.write(f"  weight: 150\n")
+                f.write(f"  weight: 3\n")
                 f.write(f"  steps:\n")
                 f.write(f"  - 30\n")
                 f.write(f"  cfg:\n")

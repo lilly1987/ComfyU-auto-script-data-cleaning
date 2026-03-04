@@ -30,7 +30,7 @@ def create_template(key: str, tags: str = None) -> dict:
     tag_value = tags if tags else " ,"
     return {
         'skip': False,
-        'weight': 100,
+        'weight': 3,
         'tag': [],
         'positive': {
             key: tag_value
