@@ -99,6 +99,7 @@ def ensure_database(connection: sqlite3.Connection) -> None:
         """
         CREATE TABLE IF NOT EXISTS LoraLoader (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            recorded_at TEXT NOT NULL,
             ckpt_name TEXT NOT NULL,
             lora_name TEXT NOT NULL,
             steps INTEGER NOT NULL,
@@ -111,7 +112,8 @@ def ensure_database(connection: sqlite3.Connection) -> None:
             A REAL NOT NULL,
             B REAL NOT NULL,
             block_vector TEXT NOT NULL,
-            recorded_at TEXT NOT NULL
+            positive TEXT NOT NULL,
+            negative TEXT NOT NULL
         )
         """
     )
@@ -143,6 +145,8 @@ def migrate_database(connection: sqlite3.Connection) -> None:
         ("sampler_name", "TEXT"),
         ("scheduler", "TEXT"),
         ("denoise", "REAL"),
+        ("positive", "TEXT"),
+        ("negative", "TEXT"),
     ):
         if column_name not in table_columns:
             connection.execute(f"ALTER TABLE LoraLoader ADD COLUMN {column_name} {column_type}")
@@ -164,6 +168,8 @@ def extract_lora_records(file_path: Path, metadata: Dict[str, List[str]]) -> Lis
     sampler_name = None
     scheduler = None
     denoise = None
+    positive = None
+    negative = None
 
     checkpoint_loader = prompt_data.get("CheckpointLoaderSimple", {})
     checkpoint_inputs = checkpoint_loader.get("inputs", {})
@@ -178,6 +184,14 @@ def extract_lora_records(file_path: Path, metadata: Dict[str, List[str]]) -> Lis
     sampler_name = ksampler_inputs.get("sampler_name")
     scheduler = ksampler_inputs.get("scheduler")
     denoise = ksampler_inputs.get("denoise")
+
+    positive_wildcard = prompt_data.get("positiveWildcard", {})
+    positive_inputs = positive_wildcard.get("inputs", {})
+    positive = positive_inputs.get("populated_text")
+
+    negative_wildcard = prompt_data.get("negativeWildcard", {})
+    negative_inputs = negative_wildcard.get("inputs", {})
+    negative = negative_inputs.get("populated_text")
 
     for node_key, node_value in sorted(prompt_data.items()):
         if not node_key.startswith("LoraLoader"):
@@ -199,6 +213,8 @@ def extract_lora_records(file_path: Path, metadata: Dict[str, List[str]]) -> Lis
                 "sampler_name": sampler_name,
                 "scheduler": scheduler,
                 "denoise": denoise,
+                "positive": positive,
+                "negative": negative,
                 "strength_model": inputs.get("strength_model"),
                 "strength_clip": inputs.get("strength_clip"),
                 "A": inputs.get("A"),
@@ -236,6 +252,8 @@ def insert_lora_records(connection: sqlite3.Connection, records: List[Dict[str, 
             "sampler_name",
             "scheduler",
             "denoise",
+            "positive",
+            "negative",
             "strength_model",
             "strength_clip",
             "A",
@@ -259,6 +277,34 @@ def insert_lora_records(connection: sqlite3.Connection, records: List[Dict[str, 
         normalized_records,
     )
     connection.commit()
+
+
+def print_lora_summary(records: List[Dict[str, object]]) -> None:
+    if not records:
+        print("No LoraLoader records found in prompt metadata.")
+        return
+
+    first_record = records[0]
+    print(f"ckpt_name: {first_record.get('ckpt_name')}")
+    print(
+        "sampler: "
+        f"steps={first_record.get('steps')}, "
+        f"cfg={first_record.get('cfg')}, "
+        f"sampler_name={first_record.get('sampler_name')}, "
+        f"scheduler={first_record.get('scheduler')}, "
+        f"denoise={first_record.get('denoise')}"
+    )
+    print(f"positive length: {len(first_record.get('positive') or '')}")
+    print(f"negative length: {len(first_record.get('negative') or '')}")
+    print("loras:")
+    for record in records:
+        print(
+            f"  - {record.get('lora_name')}: "
+            f"strength_model={record.get('strength_model')}, "
+            f"strength_clip={record.get('strength_clip')}, "
+            f"A={record.get('A')}, "
+            f"B={record.get('B')}"
+        )
 
 
 def main() -> int:
@@ -300,15 +346,9 @@ def main() -> int:
                 print("No PNG text metadata found.")
                 continue
 
-            for key, values in metadata.items():
-                for value_index, value in enumerate(values, start=1):
-                    suffix = f" #{value_index}" if len(values) > 1 else ""
-                    print(f"[{key}{suffix}]")
-                    print(value)
-                    print()
-
             try:
                 lora_records = extract_lora_records(file_path, metadata)
+                print_lora_summary(lora_records)
                 insert_lora_records(connection, lora_records)
                 total_lora_records += len(lora_records)
                 print(f"LoraLoader rows inserted: {len(lora_records)}")
