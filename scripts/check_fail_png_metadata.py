@@ -99,7 +99,8 @@ def ensure_database(connection: sqlite3.Connection) -> None:
         """
         CREATE TABLE IF NOT EXISTS LoraLoader (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            lora_key TEXT NOT NULL,
+            lora_name TEXT NOT NULL,
+            ckpt_name TEXT,
             strength_model REAL,
             strength_clip REAL,
             A REAL,
@@ -110,11 +111,25 @@ def ensure_database(connection: sqlite3.Connection) -> None:
         """
     )
     connection.commit()
+    migrate_database(connection)
 
 
 def get_table_columns(connection: sqlite3.Connection, table_name: str) -> List[str]:
     rows = connection.execute(f"PRAGMA table_info({table_name})").fetchall()
     return [row[1] for row in rows]
+
+
+def migrate_database(connection: sqlite3.Connection) -> None:
+    table_columns = get_table_columns(connection, "LoraLoader")
+
+    if "lora_key" in table_columns and "lora_name" not in table_columns:
+        connection.execute("ALTER TABLE LoraLoader RENAME COLUMN lora_key TO lora_name")
+        connection.commit()
+        table_columns = get_table_columns(connection, "LoraLoader")
+
+    if "ckpt_name" not in table_columns:
+        connection.execute("ALTER TABLE LoraLoader ADD COLUMN ckpt_name TEXT")
+        connection.commit()
 
 
 def extract_lora_records(file_path: Path, metadata: Dict[str, List[str]]) -> List[Dict[str, object]]:
@@ -125,6 +140,13 @@ def extract_lora_records(file_path: Path, metadata: Dict[str, List[str]]) -> Lis
     prompt_data = json.loads(prompt_values[0])
     recorded_at = datetime.now().isoformat(timespec="seconds")
     records: List[Dict[str, object]] = []
+    ckpt_name = None
+
+    checkpoint_loader = prompt_data.get("CheckpointLoaderSimple", {})
+    checkpoint_inputs = checkpoint_loader.get("inputs", {})
+    checkpoint_path = checkpoint_inputs.get("ckpt_name")
+    if checkpoint_path:
+        ckpt_name = Path(str(checkpoint_path)).stem
 
     for node_key, node_value in sorted(prompt_data.items()):
         if not node_key.startswith("LoraLoader"):
@@ -139,8 +161,8 @@ def extract_lora_records(file_path: Path, metadata: Dict[str, List[str]]) -> Lis
         records.append(
             {
                 "png_file": file_path.name,
-                "lora_key": lora_key,
-                "lora_name": lora_name,
+                "lora_name": lora_key,
+                "ckpt_name": ckpt_name,
                 "strength_model": inputs.get("strength_model"),
                 "strength_clip": inputs.get("strength_clip"),
                 "A": inputs.get("A"),
@@ -158,12 +180,21 @@ def insert_lora_records(connection: sqlite3.Connection, records: List[Dict[str, 
         return
 
     table_columns = get_table_columns(connection, "LoraLoader")
+    normalized_records: List[Dict[str, object]] = []
+
+    for record in records:
+        normalized_record = dict(record)
+        if "lora_key" in table_columns and "lora_name" not in table_columns:
+            normalized_record["lora_key"] = normalized_record.get("lora_name")
+        normalized_records.append(normalized_record)
+
     insert_columns = [
         column
         for column in (
             "png_file",
             "lora_key",
             "lora_name",
+            "ckpt_name",
             "strength_model",
             "strength_clip",
             "A",
@@ -184,7 +215,7 @@ def insert_lora_records(connection: sqlite3.Connection, records: List[Dict[str, 
             {value_sql}
         )
         """,
-        records,
+        normalized_records,
     )
     connection.commit()
 
