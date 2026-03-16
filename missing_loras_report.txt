@@ -2,10 +2,29 @@ WeightLora.yml 등록 현황 검사 보고서
 ============================================================
 
 타입: IL
-등록되지 않은 LoRA: 1개
+등록되지 않은 LoRA: 20개
 
 파일 목록:
+  - 18Master-10
+  - Frame_Bondage_v1
+  - G5HACNB15GDEMFACZE8ZJX3RV0
+  - MindFlayerLair-000013
+  - MinotaurLairV1-000010
+  - See-Through Cutout Dress_epoch_10
+  - Sex-Machine-Helper-1A
+  - TribalCarry_Illustrious_v3
+  - Velvet_short_qipao-_IL
+  - XX7JX8GFHGTTDSB6M3V4JHW6C0
   - checkpoint-e18_s324 (1)
+  - double insertion X-ray
+  - full-nelson-illustriousxl-lora-nochekaiser
+  - impregnation-illustriousxl-lora-nochekaiser
+  - mating-press-from-side-v2-illustriousxl-lora-nochekaiser
+  - on-side-missionary-v7-illustriousxl-lora-nochekaiser
+  - penis_shape_stomach_bulge_ilxl_v1
+  - spooning-v4-illustriousxl-lora-nochekaiser
+  - spooning-v5-illustriousxl-lora-nochekaiser
+  - standing-sex-v6-illustriousxl-lora-nochekaiser
 
 ------------------------------------------------------------
 
