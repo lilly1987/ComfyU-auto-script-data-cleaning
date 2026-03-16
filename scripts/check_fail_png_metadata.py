@@ -99,13 +99,18 @@ def ensure_database(connection: sqlite3.Connection) -> None:
         """
         CREATE TABLE IF NOT EXISTS LoraLoader (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ckpt_name TEXT NOT NULL,
             lora_name TEXT NOT NULL,
-            ckpt_name TEXT,
-            strength_model REAL,
-            strength_clip REAL,
-            A REAL,
-            B REAL,
-            block_vector TEXT,
+            steps INTEGER NOT NULL,
+            cfg REAL NOT NULL,
+            sampler_name TEXT NOT NULL,
+            scheduler TEXT NOT NULL,
+            denoise REAL NOT NULL,
+            strength_model REAL NOT NULL,
+            strength_clip REAL NOT NULL,
+            A REAL NOT NULL,
+            B REAL NOT NULL,
+            block_vector TEXT NOT NULL,
             recorded_at TEXT NOT NULL
         )
         """
@@ -130,6 +135,19 @@ def migrate_database(connection: sqlite3.Connection) -> None:
     if "ckpt_name" not in table_columns:
         connection.execute("ALTER TABLE LoraLoader ADD COLUMN ckpt_name TEXT")
         connection.commit()
+        table_columns = get_table_columns(connection, "LoraLoader")
+
+    for column_name, column_type in (
+        ("steps", "INTEGER"),
+        ("cfg", "REAL"),
+        ("sampler_name", "TEXT"),
+        ("scheduler", "TEXT"),
+        ("denoise", "REAL"),
+    ):
+        if column_name not in table_columns:
+            connection.execute(f"ALTER TABLE LoraLoader ADD COLUMN {column_name} {column_type}")
+            connection.commit()
+            table_columns = get_table_columns(connection, "LoraLoader")
 
 
 def extract_lora_records(file_path: Path, metadata: Dict[str, List[str]]) -> List[Dict[str, object]]:
@@ -141,12 +159,25 @@ def extract_lora_records(file_path: Path, metadata: Dict[str, List[str]]) -> Lis
     recorded_at = datetime.now().isoformat(timespec="seconds")
     records: List[Dict[str, object]] = []
     ckpt_name = None
+    steps = None
+    cfg = None
+    sampler_name = None
+    scheduler = None
+    denoise = None
 
     checkpoint_loader = prompt_data.get("CheckpointLoaderSimple", {})
     checkpoint_inputs = checkpoint_loader.get("inputs", {})
     checkpoint_path = checkpoint_inputs.get("ckpt_name")
     if checkpoint_path:
         ckpt_name = Path(str(checkpoint_path)).stem
+
+    ksampler = prompt_data.get("KSampler", {})
+    ksampler_inputs = ksampler.get("inputs", {})
+    steps = ksampler_inputs.get("steps")
+    cfg = ksampler_inputs.get("cfg")
+    sampler_name = ksampler_inputs.get("sampler_name")
+    scheduler = ksampler_inputs.get("scheduler")
+    denoise = ksampler_inputs.get("denoise")
 
     for node_key, node_value in sorted(prompt_data.items()):
         if not node_key.startswith("LoraLoader"):
@@ -163,6 +194,11 @@ def extract_lora_records(file_path: Path, metadata: Dict[str, List[str]]) -> Lis
                 "png_file": file_path.name,
                 "lora_name": lora_key,
                 "ckpt_name": ckpt_name,
+                "steps": steps,
+                "cfg": cfg,
+                "sampler_name": sampler_name,
+                "scheduler": scheduler,
+                "denoise": denoise,
                 "strength_model": inputs.get("strength_model"),
                 "strength_clip": inputs.get("strength_clip"),
                 "A": inputs.get("A"),
@@ -195,6 +231,11 @@ def insert_lora_records(connection: sqlite3.Connection, records: List[Dict[str, 
             "lora_key",
             "lora_name",
             "ckpt_name",
+            "steps",
+            "cfg",
+            "sampler_name",
+            "scheduler",
+            "denoise",
             "strength_model",
             "strength_clip",
             "A",
