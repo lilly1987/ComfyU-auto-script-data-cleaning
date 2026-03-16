@@ -29,19 +29,20 @@ SCHEMA_COLUMNS = [
     ("recorded_at", "TEXT"),
     ("ckpt_name", "TEXT"),
     ("lora_name", "TEXT"),
-    ("steps", "INTEGER"),
-    ("cfg", "REAL"),
-    ("sampler_name", "TEXT"),
-    ("scheduler", "TEXT"),
-    ("denoise", "REAL"),
-    ("positive", "TEXT"),
-    ("negative", "TEXT"),
     ("strength_model", "REAL"),
     ("strength_clip", "REAL"),
     ("A", "REAL"),
     ("B", "REAL"),
+    ("cfg", "REAL"),
+    ("steps", "INTEGER"),
+    ("sampler_name", "TEXT"),
+    ("scheduler", "TEXT"),
+    ("denoise", "REAL"),
     ("block_vector", "TEXT"),
+    ("positive", "TEXT"),
+    ("negative", "TEXT"),
 ]
+EXPORT_COLUMNS = [name for name, _ in SCHEMA_COLUMNS]
 DATA_COLUMNS = [name for name, _ in SCHEMA_COLUMNS if name != "id"]
 
 
@@ -319,7 +320,7 @@ def vacuum_database(connection: sqlite3.Connection) -> None:
 
 def export_to_excel(connection: sqlite3.Connection, output_path: Path) -> None:
     query = f"""
-    SELECT {", ".join(DATA_COLUMNS)}
+    SELECT {", ".join(EXPORT_COLUMNS)}
     FROM {TABLE_NAME}
     ORDER BY id
     """
@@ -329,7 +330,7 @@ def export_to_excel(connection: sqlite3.Connection, output_path: Path) -> None:
     worksheet = workbook.active
     worksheet.title = TABLE_NAME
 
-    worksheet.append(DATA_COLUMNS)
+    worksheet.append(EXPORT_COLUMNS)
     for row in rows:
         worksheet.append(list(row))
 
