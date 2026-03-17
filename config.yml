@@ -222,6 +222,15 @@ char:
     - '/.* chest.*/'
     - '/.* tail.*/'
     - '/.* horns.*/'
+    - 'tail'
+    - 'horns'
+    - 'multiple tails'
+    - 'animal tail'
+    - 'fox tail'
+    - 'cat tail'
+    - 'demon tail'
+    - 'horse tail'
+    - 'mechanical tail'
 
   skin_tags:
     - '/.* skin.*/'
