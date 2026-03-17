@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 set "PYTHON_EXE=W:\ComfyUI_windows_portable\python_embeded\python.exe"
-set "SCRIPT_PATH=%~dp0scripts\add_missing_checkpoint.py"
+set "SCRIPT_PATH=%~dp0scripts\sync_checkpoint_yml.py"
 
 cd /d "%~dp0"
 
