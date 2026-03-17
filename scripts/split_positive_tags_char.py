@@ -259,7 +259,24 @@ def process_entry(
         return None
 
     char_value = positive.get("char")
+    existing_dress_value = positive.get("dress", "")
+    existing_dress_structure = extract_dress_structure_from_field(existing_dress_value)
+    dress_suffix = extract_dress_suffix(existing_dress_value)
+    normalized_dress = build_dress_field(existing_dress_structure, dress_suffix)
+
     if not isinstance(char_value, str) or not char_value.strip():
+        if (
+            isinstance(existing_dress_value, str)
+            and existing_dress_value
+            and existing_dress_value != normalized_dress
+        ):
+            return {
+                "char": char_value,
+                "dress": normalized_dress,
+                "removed_tags": [],
+                "moved_dress_tags": [],
+                "changed": True,
+            }
         return None
 
     parsed = parse_items(char_value)
@@ -269,10 +286,6 @@ def process_entry(
 
     new_char_value = render_items(new_char_items)
     new_dress_structure = render_items(new_dress_items)
-
-    existing_dress_value = positive.get("dress", "")
-    existing_dress_structure = extract_dress_structure_from_field(existing_dress_value)
-    dress_suffix = extract_dress_suffix(existing_dress_value)
 
     merged_dress_tags = merge_tag_lists(
         [tag for tag in split_top_level(existing_dress_structure, ",") if tag.strip()]
