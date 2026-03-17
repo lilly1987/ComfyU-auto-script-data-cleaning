@@ -1,32 +1,28 @@
 # -*- coding: utf-8 -*-
 """
-char.yml 동기화 통합 스크립트.
+char.yml sync pipeline.
 
-1. safetensors 기준으로 누락 키 추가
-2. skip != true 항목의 positive.char 정리
-3. excluded_tags 제거
-4. char / dress 자동 분리
-
-기존 스크립트 역할:
-- add_missing_keys_char.py
-- remove_excluded_tags_char.py
-- split_positive_tags_char.py
+1. Add missing keys from safetensors
+2. Clean positive.char
+3. Remove excluded tags
+4. Split char / dress
+5. Mark auto-processed entries as skip: auto
 """
 import argparse
 import os
 import sys
-from typing import List, Set, Tuple
+from typing import Any, List, Set, Tuple
 
 
 script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
-from utils import ConfigLoader, SafeTensorsReader
-from utils import TagProcessor
+from utils import ConfigLoader, SafeTensorsReader, TagProcessor, YAMLHandler
 from scripts.split_positive_tags_char import process_char_yml
 
 
+AUTO_SKIP = "auto"
 TEMPLATE = {
     "skip": False,
     "weight": 3,
@@ -56,15 +52,27 @@ def load_existing_keys(yml_path: str) -> Set[str]:
     return {key for key in data.keys() if key}
 
 
+def should_mark_auto_skip(value: Any) -> bool:
+    if value is None:
+        return True
+    if value is False:
+        return True
+    if isinstance(value, int):
+        return value == 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"", "false", "0"}
+    return False
+
+
 def build_initial_values(
     file_path: str,
     excluded_tags: List[str],
     dress_tags: List[str],
     max_tags: int,
-) -> Tuple[str, str, bool]:
+) -> Tuple[str, str]:
     tag_frequency = SafeTensorsReader.extract_ss_tag_frequency(file_path)
     if not tag_frequency:
-        return TEMPLATE["positive"]["char"].strip(), TEMPLATE["positive"]["dress"], False
+        return TEMPLATE["positive"]["char"].strip(), TEMPLATE["positive"]["dress"]
 
     sorted_tags = TagProcessor.process_tag_frequency(
         tag_frequency,
@@ -73,9 +81,10 @@ def build_initial_values(
         dress_tags=dress_tags,
     )
 
-    dress_tag_list = TagProcessor.extract_dress_tags_from_tag_frequency(
-        tag_frequency, dress_tags
-    ) if dress_tags else []
+    dress_tag_list = (
+        TagProcessor.extract_dress_tags_from_tag_frequency(tag_frequency, dress_tags)
+        if dress_tags else []
+    )
 
     if sorted_tags:
         filtered_char, _ = TagProcessor.remove_excluded_tags_from_string(
@@ -90,7 +99,7 @@ def build_initial_values(
     else:
         dress_value = TEMPLATE["positive"]["dress"]
 
-    return char_value, dress_value, True
+    return char_value, dress_value
 
 
 def append_missing_entries(
@@ -112,21 +121,44 @@ def append_missing_entries(
 
     with open(yml_path, "a", encoding="utf-8") as f:
         for key in missing_keys:
-            char_value, dress_value, _ = build_initial_values(
+            char_value, dress_value = build_initial_values(
                 key_to_file[key], excluded_tags, dress_tags, max_tags
             )
             char_value_escaped = char_value.replace("'", "''")
             dress_value_escaped = dress_value.replace("'", "''")
-
             f.write(f'"{key}": # auto\n')
             f.write(f'  weight: {TEMPLATE["weight"]}\n')
             f.write("  positive:\n")
             f.write(f"    char: '{char_value_escaped}'\n")
             f.write(f"    dress: '{dress_value_escaped}'\n")
-            f.write(f"  skip: {str(TEMPLATE['skip']).lower()}\n")
+            f.write("  skip: false\n")
             f.write("\n")
 
     return len(missing_keys)
+
+
+def mark_auto_skip_entries(yml_path: str, target_keys: List[str], dry_run: bool = False) -> int:
+    if not target_keys:
+        return 0
+
+    yaml_handler = YAMLHandler(allow_duplicate_keys=True)
+    yml_data = yaml_handler.load(yml_path)
+    if yml_data is None:
+        return 0
+
+    marked = 0
+    for key in target_keys:
+        value = yml_data.get(key)
+        if not isinstance(value, dict):
+            continue
+        if should_mark_auto_skip(value.get("skip")):
+            value["skip"] = AUTO_SKIP
+            marked += 1
+
+    if marked > 0 and not dry_run:
+        yaml_handler.save(yml_path, yml_data)
+
+    return marked
 
 
 def sync_type(
@@ -178,16 +210,22 @@ def sync_type(
         dry_run=dry_run,
     )
 
-    if added_count and not dry_run:
-        print(f"  추가 완료: {added_count}개")
-    elif added_count and dry_run:
-        print(f"  추가 예정: {added_count}개")
+    if added_count > 0:
+        print(f"  추가 {'예정' if dry_run else '완료'}: {added_count}개")
 
-    changed_entries, _, _ = process_char_yml(
+    changed_entries, _, changed_keys = process_char_yml(
         yml_path=yml_path,
         excluded_tags=excluded_tags,
         dress_tags=dress_tags,
         char_feature_tags=char_feature_tags,
+        mark_auto_skip=True,
+        dry_run=dry_run,
+    )
+
+    target_keys = missing_keys + [key for key in changed_keys if key not in missing_keys]
+    auto_skip_count = mark_auto_skip_entries(
+        yml_path=yml_path,
+        target_keys=target_keys,
         dry_run=dry_run,
     )
 
@@ -196,12 +234,15 @@ def sync_type(
     else:
         print(f"  후처리 변경: {changed_entries}개")
 
+    if auto_skip_count > 0:
+        print(f"  skip:auto 설정: {auto_skip_count}개")
+
     return added_count, changed_entries
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="char.yml 누락 키 추가 + 태그 정리를 한 번에 수행합니다."
+        description="char.yml missing key add + tag cleanup + auto skip marking"
     )
     parser.add_argument(
         "--type",
@@ -225,9 +266,9 @@ def main() -> int:
     comfui_dir = config.get_comfui_dir()
     data_dir = config.get_data_dir()
     type_names = args.type_names or config.get_types()
-    excluded_tags = config.get_excluded_tags("char")
-    dress_tags = config.get_dress_tags()
-    char_feature_tags = config.get("char", {}).get("char_feature_tags", [])
+    excluded_tags = config.get_char_excluded_tags()
+    dress_tags = config.get_char_dress_tags()
+    char_feature_tags = config.get_char_feature_tags()
     max_tags = config.get_max_tags("lora")
 
     print("=" * 80)

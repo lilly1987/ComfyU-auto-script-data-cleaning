@@ -184,43 +184,62 @@ char:
 
   # char 필드에 남겨둘 캐릭터 외형/얼굴/머리 관련 태그 목록
   # dress_tags 와 겹치더라도 char_feature_tags 가 우선합니다.
-  char_feature_tags:
+  hair_tags:
     - '/.* hair.*/'
-    - '/.* eyes.*/'
-    - '/.* eye.*/'
     - '/.* bangs.*/'
     - '/.* braid.*/'
     - '/.* twintails.*/'
     - '/.* ponytail.*/'
     - '/.* sidelocks.*/'
     - '/.* ahoge.*/'
-    - '/.* eyelashes.*/'
-    - '/.* pupils.*/'
-    - '/.* eyebrows.*/'
-    - '/.* ears.*/'
-    - '/.* horns.*/'
-    - '/.* tail.*/'
-    - '/.* fang.*/'
-    - '/.* skin.*/'
-    - '/.* breasts.*/'
-    - '/.* chest.*/'
-    - '/.* body.*/'
-    - '/.* face.*/'
-    - '/.* smile.*/'
-    - '/.* mole.*/'
-    - '/.* blush.*/'
     - 'long hair'
     - 'short hair'
     - 'medium hair'
     - 'very long hair'
     - 'hair between eyes'
     - 'hair over one eye'
+    - 'ahoge'
+
+  face_tags:
+    - '/.* eyes.*/'
+    - '/.* eye.*/'
+    - '/.* eyelashes.*/'
+    - '/.* pupils.*/'
+    - '/.* eyebrows.*/'
+    - '/.* ears.*/'
+    - '/.* fang.*/'
+    - '/.* face.*/'
+    - '/.* mole.*/'
     - 'heterochromia'
     - 'pointy ears'
     - 'animal ears'
     - 'elf'
     - 'fang'
-    - 'ahoge'
+
+  body_tags:
+    - '/.* body.*/'
+    - '/.* breasts.*/'
+    - '/.* chest.*/'
+    - '/.* tail.*/'
+    - '/.* horns.*/'
+
+  skin_tags:
+    - '/.* skin.*/'
+    - 'pale skin'
+
+  accessory_tags:
+    - 'hat'
+    - '/.* headwear.*/'
+    - '/.* eyewear.*/'
+    - '/.*eyewear.*/'
+    - '/.*earrings.*/'
+    - '/.*jewelry.*/'
+    - '/.*choker.*/'
+    - '/.*belt.*/'
+    - '/.*necklace.*/'
+    - '/.*piercing.*/'
+
+  char_feature_tags: []
 
 # --- lora.yml 관련 설정 ---
 lora:

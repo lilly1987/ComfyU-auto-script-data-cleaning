@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 set "PYTHON_EXE=W:\ComfyUI_windows_portable\python_embeded\python.exe"
-set "SCRIPT_PATH=%~dp0scripts\add_missing_keys_char.py"
+set "SCRIPT_PATH=%~dp0scripts\sync_char_yml.py"
 
 cd /d "%~dp0"
 
@@ -19,7 +19,7 @@ if not exist "%SCRIPT_PATH%" (
     exit /b 1
 )
 
-"%PYTHON_EXE%" "%SCRIPT_PATH%"
+"%PYTHON_EXE%" "%SCRIPT_PATH%" %*
 
 if errorlevel 1 (
     echo.

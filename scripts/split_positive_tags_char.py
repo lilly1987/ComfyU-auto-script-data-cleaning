@@ -27,6 +27,7 @@ from utils import ConfigLoader, TagProcessor, YAMLHandler
 
 
 DEFAULT_DRESS_SUFFIX = "8::__dress__"
+AUTO_SKIP = "auto"
 
 
 class GroupNode:
@@ -226,8 +227,20 @@ def normalize_bool(value: Any) -> bool:
     if isinstance(value, int):
         return value != 0
     if isinstance(value, str):
-        return value.strip().lower() in {"true", "1", "yes", "y"}
+        return value.strip().lower() in {"true", "1", "yes", "y", "auto"}
     return bool(value)
+
+
+def should_mark_auto_skip(value: Any) -> bool:
+    if value is None:
+        return True
+    if value is False:
+        return True
+    if isinstance(value, int):
+        return value == 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"", "false", "0"}
+    return False
 
 
 def process_entry(
@@ -292,6 +305,7 @@ def process_char_yml(
     excluded_tags: List[str],
     dress_tags: List[str],
     char_feature_tags: List[str],
+    mark_auto_skip: bool = False,
     dry_run: bool = False,
 ) -> Tuple[int, int, List[str]]:
     yaml_handler = YAMLHandler(allow_duplicate_keys=True)
@@ -316,6 +330,8 @@ def process_char_yml(
 
         value["positive"]["char"] = result["char"]
         value["positive"]["dress"] = result["dress"]
+        if mark_auto_skip and should_mark_auto_skip(value.get("skip")):
+            value["skip"] = AUTO_SKIP
 
         changed_entries += 1
         changed_keys.append(str(key))
@@ -396,9 +412,9 @@ def main() -> int:
 
     data_dir = config.get_data_dir()
     type_names = args.type_names or config.get_types()
-    excluded_tags = config.get_excluded_tags("char")
-    dress_tags = config.get_dress_tags()
-    char_feature_tags = config.get("char", {}).get("char_feature_tags", [])
+    excluded_tags = config.get_char_excluded_tags()
+    dress_tags = config.get_char_dress_tags()
+    char_feature_tags = config.get_char_feature_tags()
 
     print("=" * 80)
     print("positive.char -> char / dress 자동 분리")
