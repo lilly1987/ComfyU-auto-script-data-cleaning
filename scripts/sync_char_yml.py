@@ -1,25 +1,19 @@
 # -*- coding: utf-8 -*-
-"""
-char.yml sync pipeline.
-
-1. Add missing keys from safetensors
-2. Clean positive.char
-3. Remove excluded tags
-4. Split char / dress
-5. Mark auto-processed entries as skip: auto
-"""
+"""char.yml sync pipeline."""
 import argparse
 import os
 import sys
-from typing import Any, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
+
+from ruamel.yaml.comments import CommentedMap
 
 
 script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
-from utils import ConfigLoader, SafeTensorsReader, TagProcessor, YAMLHandler
 from scripts.split_positive_tags_char import process_char_yml
+from utils import ConfigLoader, SafeTensorsReader, TagProcessor, YAMLHandler
 
 
 AUTO_SKIP = "auto"
@@ -48,7 +42,6 @@ def load_existing_keys(yml_path: str) -> Set[str]:
 
     with open(yml_path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f) or {}
-
     return {key for key in data.keys() if key}
 
 
@@ -83,12 +76,15 @@ def build_initial_values(
 
     dress_tag_list = (
         TagProcessor.extract_dress_tags_from_tag_frequency(tag_frequency, dress_tags)
-        if dress_tags else []
+        if dress_tags
+        else []
     )
 
     if sorted_tags:
         filtered_char, _ = TagProcessor.remove_excluded_tags_from_string(
-            sorted_tags, excluded_tags=[], dress_tags=None
+            sorted_tags,
+            excluded_tags=[],
+            dress_tags=None,
         )
         char_value = filtered_char if filtered_char and filtered_char.strip() else sorted_tags
     else:
@@ -105,7 +101,7 @@ def build_initial_values(
 def append_missing_entries(
     yml_path: str,
     missing_keys: List[str],
-    key_to_file: dict,
+    key_to_file: Dict[str, str],
     excluded_tags: List[str],
     dress_tags: List[str],
     max_tags: int,
@@ -122,19 +118,59 @@ def append_missing_entries(
     with open(yml_path, "a", encoding="utf-8") as f:
         for key in missing_keys:
             char_value, dress_value = build_initial_values(
-                key_to_file[key], excluded_tags, dress_tags, max_tags
+                key_to_file[key],
+                excluded_tags,
+                dress_tags,
+                max_tags,
             )
             char_value_escaped = char_value.replace("'", "''")
             dress_value_escaped = dress_value.replace("'", "''")
             f.write(f'"{key}": # auto\n')
             f.write(f'  weight: {TEMPLATE["weight"]}\n')
+            f.write("  #favorites: 1\n")
+            f.write("  skip: false\n")
             f.write("  positive:\n")
             f.write(f"    char: '{char_value_escaped}'\n")
             f.write(f"    dress: '{dress_value_escaped}'\n")
-            f.write("  skip: false\n")
             f.write("\n")
 
     return len(missing_keys)
+
+
+def reorder_entry_keys(entry: Dict[str, Any]) -> CommentedMap:
+    reordered = CommentedMap()
+    reordered["weight"] = entry.get("weight", TEMPLATE["weight"])
+    if "favorites" in entry:
+        reordered["favorites"] = entry["favorites"]
+    reordered["skip"] = entry.get("skip", False)
+    if "favorites" not in entry:
+        reordered.yaml_set_comment_before_after_key("skip", before="favorites: 1")
+
+    for key, value in entry.items():
+        if key in {"weight", "favorites", "skip"}:
+            continue
+        reordered[key] = value
+
+    return reordered
+
+
+def reorder_main_entries(yml_path: str, dry_run: bool = False) -> int:
+    yaml_handler = YAMLHandler(allow_duplicate_keys=True)
+    yml_data = yaml_handler.load(yml_path)
+    if yml_data is None:
+        return 0
+
+    reordered_count = 0
+    for key, value in list(yml_data.items()):
+        if not isinstance(value, dict):
+            continue
+        yml_data[key] = reorder_entry_keys(value)
+        reordered_count += 1
+
+    if reordered_count > 0 and not dry_run:
+        yaml_handler.save(yml_path, yml_data)
+
+    return reordered_count
 
 
 def mark_auto_skip_entries(yml_path: str, target_keys: List[str], dry_run: bool = False) -> int:
@@ -181,7 +217,6 @@ def sync_type(
     if not os.path.exists(folder_path):
         print(f"  경고: char 폴더가 없습니다: {folder_path}")
         return 0, 0
-
     if not os.path.exists(yml_path):
         print(f"  경고: char.yml 이 없습니다: {yml_path}")
         return 0, 0
@@ -190,7 +225,7 @@ def sync_type(
         existing_keys = load_existing_keys(yml_path)
     except Exception as e:
         print(f"  오류: char.yml 읽기 실패: {e}")
-        print("  힌트: 먼저 _fix_yaml_quotes.cmd 를 실행해 주세요.")
+        print("  힌트: 먼저 _fix_yaml_quotes.cmd 를 실행해 주세요")
         return 0, 0
 
     safetensors_keys, key_to_file = SafeTensorsReader.get_keys_from_folder(folder_path)
@@ -209,7 +244,6 @@ def sync_type(
         max_tags=max_tags,
         dry_run=dry_run,
     )
-
     if added_count > 0:
         print(f"  추가 {'예정' if dry_run else '완료'}: {added_count}개")
 
@@ -228,14 +262,16 @@ def sync_type(
         target_keys=target_keys,
         dry_run=dry_run,
     )
+    reordered_count = reorder_main_entries(yml_path=yml_path, dry_run=dry_run)
 
     if changed_entries == 0:
         print("  [OK] 후처리 변경 없음")
     else:
         print(f"  후처리 변경: {changed_entries}개")
-
     if auto_skip_count > 0:
         print(f"  skip:auto 설정: {auto_skip_count}개")
+    if reordered_count > 0:
+        print(f"  key 순서 정리: {reordered_count}개")
 
     return added_count, changed_entries
 
@@ -244,17 +280,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="char.yml missing key add + tag cleanup + auto skip marking"
     )
-    parser.add_argument(
-        "--type",
-        dest="type_names",
-        action="append",
-        help="처리할 타입명. 여러 번 지정 가능. 미지정 시 config.yml 의 types 전체 처리",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="파일 저장 없이 변경 예정만 출력",
-    )
+    parser.add_argument("--type", dest="type_names", action="append")
+    parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
 
 
@@ -283,7 +310,6 @@ def main() -> int:
 
     total_added = 0
     total_changed = 0
-
     for type_name in type_names:
         added_count, changed_count = sync_type(
             type_name=type_name,

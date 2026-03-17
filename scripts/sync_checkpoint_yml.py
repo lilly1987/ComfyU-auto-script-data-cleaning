@@ -1,26 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-checkpoint.yml 동기화 통합 스크립트.
-
-현재 역할:
-1. models/checkpoints/<type> 기준으로 누락된 checkpoint 키 추가
-2. safetensors 메타데이터에서 prompt/workflow 를 읽어
-   - negative.checkpoint
-   - negative.quality
-   - positive.checkpoint
-   - positive.quality
-   - positive.anime
-   - steps / cfg / sampler_name
-   을 자동 채움
-3. 메타데이터가 없으면 새 항목의 positive/negative 블록은 주석 형태로 추가
-4. 기존 항목의 기본 구조 보정
-"""
+"""checkpoint.yml sync pipeline."""
 import argparse
 import json
 import os
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 
+from ruamel.yaml.comments import CommentedMap
 from safetensors import safe_open
 
 
@@ -100,7 +86,6 @@ def configure_console_encoding() -> None:
 def get_checkpoint_file_map(checkpoint_dir: str) -> Dict[str, str]:
     if not os.path.exists(checkpoint_dir):
         return {}
-
     file_map: Dict[str, str] = {}
     for filename in os.listdir(checkpoint_dir):
         if filename.endswith(".safetensors"):
@@ -111,32 +96,35 @@ def get_checkpoint_file_map(checkpoint_dir: str) -> Dict[str, str]:
 def split_prompt_tags(text: str) -> List[str]:
     if not text:
         return []
-
     normalized_text = text.replace("\r", "\n").replace("\n", ",")
-    tags = [part.strip() for part in normalized_text.split(",") if part.strip()]
-    return tags
+    return [part.strip() for part in normalized_text.split(",") if part.strip()]
 
 
 def join_tags(tags: List[str], fallback: str = "") -> str:
     tags = [tag for tag in tags if tag and tag.strip()]
-    if not tags:
-        return fallback
-    return ", ".join(tags)
+    return ", ".join(tags) if tags else fallback
 
 
 def is_positive_quality_tag(tag: str) -> bool:
     normalized = TagProcessor.normalize_tag(tag)
-    return normalized in POSITIVE_QUALITY_HINTS or "quality" in normalized or normalized in {"absurdres", "highres", "hi res", "newest"}
+    return (
+        normalized in POSITIVE_QUALITY_HINTS
+        or "quality" in normalized
+        or normalized in {"absurdres", "highres", "hi res", "newest"}
+    )
 
 
 def is_negative_quality_tag(tag: str) -> bool:
     normalized = TagProcessor.normalize_tag(tag)
-    return normalized in NEGATIVE_QUALITY_HINTS or "quality" in normalized or normalized in {"lowres", "blurry"}
+    return (
+        normalized in NEGATIVE_QUALITY_HINTS
+        or "quality" in normalized
+        or normalized in {"lowres", "blurry"}
+    )
 
 
 def is_anime_tag(tag: str) -> bool:
-    normalized = TagProcessor.normalize_tag(tag)
-    return normalized in ANIME_HINTS
+    return TagProcessor.normalize_tag(tag) in ANIME_HINTS
 
 
 def split_positive_prompt(text: str) -> Dict[str, str]:
@@ -147,11 +135,10 @@ def split_positive_prompt(text: str) -> Dict[str, str]:
     for tag in split_prompt_tags(text):
         if is_anime_tag(tag):
             anime_tags.append(tag)
-            continue
-        if is_positive_quality_tag(tag):
+        elif is_positive_quality_tag(tag):
             quality_tags.append(tag)
-            continue
-        checkpoint_tags.append(tag)
+        else:
+            checkpoint_tags.append(tag)
 
     return {
         "checkpoint": join_tags(checkpoint_tags, " "),
@@ -167,8 +154,8 @@ def split_negative_prompt(text: str) -> Dict[str, str]:
     for tag in split_prompt_tags(text):
         if is_negative_quality_tag(tag):
             quality_tags.append(tag)
-            continue
-        checkpoint_tags.append(tag)
+        else:
+            checkpoint_tags.append(tag)
 
     return {
         "checkpoint": join_tags(checkpoint_tags, "  "),
@@ -197,7 +184,6 @@ def extract_prompts_from_workflow(workflow: Dict[str, Any]) -> Dict[str, Any]:
             text = values[0].strip()
             if not text:
                 continue
-
             normalized = TagProcessor.normalize_tag(text)
             if any(hint in normalized for hint in ("worst quality", "low quality", "bad anatomy", "negative")):
                 negative_candidates.append(text)
@@ -208,31 +194,24 @@ def extract_prompts_from_workflow(workflow: Dict[str, Any]) -> Dict[str, Any]:
         result["positive_prompt"] = max(positive_candidates, key=len)
     if negative_candidates:
         result["negative_prompt"] = max(negative_candidates, key=len)
-
     return result
 
 
 def extract_prompts_from_prompt_json(prompt_json: Dict[str, Any]) -> Dict[str, Any]:
     result: Dict[str, Any] = {}
-
     for node in prompt_json.values():
         if not isinstance(node, dict):
             continue
-
-        node_type = str(node.get("class_type", ""))
-        inputs = node.get("inputs", {}) or {}
-
-        if node_type == "CheckpointLoaderSimple":
-            ckpt_name = inputs.get("ckpt_name")
-            if ckpt_name:
-                result["source_checkpoint"] = os.path.splitext(str(ckpt_name))[0]
-
+        if str(node.get("class_type", "")) != "CheckpointLoaderSimple":
+            continue
+        ckpt_name = (node.get("inputs", {}) or {}).get("ckpt_name")
+        if ckpt_name:
+            result["source_checkpoint"] = os.path.splitext(str(ckpt_name))[0]
     return result
 
 
 def extract_metadata_from_file(file_path: str) -> Dict[str, Any]:
     metadata_result: Dict[str, Any] = {}
-
     try:
         with safe_open(file_path, framework="pt") as f:
             metadata = f.metadata() or {}
@@ -244,8 +223,7 @@ def extract_metadata_from_file(file_path: str) -> Dict[str, Any]:
 
     if workflow_raw:
         try:
-            workflow_data = json.loads(workflow_raw)
-            metadata_result.update(extract_prompts_from_workflow(workflow_data))
+            metadata_result.update(extract_prompts_from_workflow(json.loads(workflow_raw)))
         except Exception:
             pass
 
@@ -261,7 +239,6 @@ def extract_metadata_from_file(file_path: str) -> Dict[str, Any]:
         metadata_result["positive"] = split_positive_prompt(metadata_result["positive_prompt"])
     if metadata_result.get("negative_prompt"):
         metadata_result["negative"] = split_negative_prompt(metadata_result["negative_prompt"])
-
     return metadata_result
 
 
@@ -270,26 +247,6 @@ def ensure_scalar(parent: Dict[str, Any], key: str, default: Any) -> bool:
         return False
     parent[key] = default
     return True
-
-
-def is_manual_skip_value(value: Any) -> bool:
-    if value is True:
-        return True
-    if isinstance(value, str) and value.strip().lower() in {"true", "auto"}:
-        return True
-    return False
-
-
-def should_mark_auto_skip(value: Any) -> bool:
-    if value is None:
-        return True
-    if value is False:
-        return True
-    if isinstance(value, int):
-        return value == 0
-    if isinstance(value, str):
-        return value.strip().lower() in {"", "false", "0"}
-    return False
 
 
 def ensure_list(parent: Dict[str, Any], key: str, default: List[Any]) -> bool:
@@ -307,33 +264,31 @@ def ensure_mapping(parent: Dict[str, Any], key: str) -> Dict[str, Any]:
     return parent[key]
 
 
+def should_mark_auto_skip(value: Any) -> bool:
+    if value is None:
+        return True
+    if value is False:
+        return True
+    if isinstance(value, int):
+        return value == 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"", "false", "0"}
+    return False
+
+
 def is_placeholder_text(value: Any) -> bool:
     if not isinstance(value, str):
         return False
-    normalized = value.strip()
-    return normalized in {"", ",", " ,"}
+    return value.strip() in {"", ",", " ,"}
 
 
 def apply_metadata_to_entry(entry: Dict[str, Any], metadata: Dict[str, Any]) -> int:
     changes = 0
+    changes += int(ensure_list(entry, "steps", metadata.get("steps") or DEFAULT_STEPS))
+    changes += int(ensure_list(entry, "cfg", metadata.get("cfg") or DEFAULT_CFG))
+    changes += int(ensure_list(entry, "sampler_name", metadata.get("sampler_name") or DEFAULT_SAMPLER))
 
-    if metadata.get("steps"):
-        changes += int(ensure_list(entry, "steps", metadata["steps"]))
-    else:
-        changes += int(ensure_list(entry, "steps", DEFAULT_STEPS))
-
-    if metadata.get("cfg"):
-        changes += int(ensure_list(entry, "cfg", metadata["cfg"]))
-    else:
-        changes += int(ensure_list(entry, "cfg", DEFAULT_CFG))
-
-    if metadata.get("sampler_name"):
-        changes += int(ensure_list(entry, "sampler_name", metadata["sampler_name"]))
-    else:
-        changes += int(ensure_list(entry, "sampler_name", DEFAULT_SAMPLER))
-
-    has_prompt_metadata = bool(metadata.get("positive") or metadata.get("negative"))
-    if not has_prompt_metadata:
+    if not (metadata.get("positive") or metadata.get("negative")):
         return changes
 
     negative = ensure_mapping(entry, "negative")
@@ -363,22 +318,36 @@ def apply_metadata_to_entry(entry: Dict[str, Any], metadata: Dict[str, Any]) -> 
 
 
 def normalize_entry(entry: Dict[str, Any], metadata: Optional[Dict[str, Any]] = None) -> int:
-    changes = 0
     metadata = metadata or {}
-
+    changes = 0
     changes += int(ensure_scalar(entry, "skip", DEFAULT_SKIP))
     changes += int(ensure_scalar(entry, "weight", DEFAULT_WEIGHT))
-    changes += int(ensure_scalar(entry, "favorites", DEFAULT_FAVORITES))
     changes += apply_metadata_to_entry(entry, metadata)
     return changes
+
+
+def reorder_entry_keys(entry: Dict[str, Any]) -> CommentedMap:
+    reordered = CommentedMap()
+    reordered["weight"] = entry.get("weight", DEFAULT_WEIGHT)
+    if "favorites" in entry:
+        reordered["favorites"] = entry["favorites"]
+    reordered["skip"] = entry.get("skip", DEFAULT_SKIP)
+    if "favorites" not in entry:
+        reordered.yaml_set_comment_before_after_key("skip", before=f"favorites: {DEFAULT_FAVORITES}")
+
+    for key, value in entry.items():
+        if key in {"weight", "favorites", "skip"}:
+            continue
+        reordered[key] = value
+    return reordered
 
 
 def render_new_entry_text(key: str, metadata: Dict[str, Any]) -> str:
     lines = [
         f"'{key}':",
-        f"  skip: {AUTO_SKIP}",
         f"  weight: {DEFAULT_WEIGHT}",
-        f"  favorites: {DEFAULT_FAVORITES}",
+        f"  #favorites: {DEFAULT_FAVORITES}",
+        f"  skip: {AUTO_SKIP}",
     ]
 
     steps = metadata.get("steps") or DEFAULT_STEPS
@@ -425,20 +394,17 @@ def render_new_entry_text(key: str, metadata: Dict[str, Any]) -> str:
     for item in sampler:
         lines.append(f"  - {item}")
     lines.append("")
-
     return "\n".join(lines) + "\n"
 
 
 def append_missing_entries(
     yml_path: str,
     missing_keys: List[str],
-    file_map: Dict[str, str],
     metadata_cache: Dict[str, Dict[str, Any]],
     dry_run: bool = False,
 ) -> int:
     if not missing_keys:
         return 0
-
     if dry_run:
         for key in missing_keys:
             state = "메타 있음" if metadata_cache.get(key) else "메타 없음"
@@ -447,9 +413,7 @@ def append_missing_entries(
 
     with open(yml_path, "a", encoding="utf-8") as f:
         for key in missing_keys:
-            text = render_new_entry_text(key, metadata_cache.get(key, {}))
-            f.write(text)
-
+            f.write(render_new_entry_text(key, metadata_cache.get(key, {})))
     return len(missing_keys)
 
 
@@ -470,7 +434,6 @@ def sync_type(
     if not os.path.exists(yml_path):
         print(f"  경고: checkpoint.yml 이 없습니다: {yml_path}")
         return 0, 0
-
     if not os.path.exists(checkpoint_dir):
         print(f"  경고: checkpoint 폴더가 없습니다: {checkpoint_dir}")
         return 0, 0
@@ -492,7 +455,6 @@ def sync_type(
     added_count = append_missing_entries(
         yml_path=yml_path,
         missing_keys=missing_keys,
-        file_map=file_map,
         metadata_cache=metadata_cache,
         dry_run=dry_run,
     )
@@ -504,7 +466,7 @@ def sync_type(
             return added_count, 0
 
     normalized_count = 0
-    for key, value in yml_data.items():
+    for key, value in list(yml_data.items()):
         if not isinstance(value, dict):
             continue
 
@@ -517,7 +479,9 @@ def sync_type(
             normalized_count += 1
             print(f"    * 구조/메타 보정: {key}")
 
-    if not dry_run and (added_count > 0 or normalized_count > 0):
+        yml_data[key] = reorder_entry_keys(value)
+
+    if not dry_run and (added_count > 0 or normalized_count > 0 or len(yml_data) > 0):
         if yaml_handler.save(yml_path, yml_data):
             print(f"  [OK] 저장 완료: {yml_path}")
         else:
@@ -536,19 +500,10 @@ def sync_type(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="checkpoint.yml 누락 키 추가와 메타 기반 자동 채우기를 한 번에 수행합니다."
+        description="checkpoint.yml missing key add + metadata fill + ordering"
     )
-    parser.add_argument(
-        "--type",
-        dest="type_names",
-        action="append",
-        help="처리할 타입명. 여러 번 지정 가능. 미지정 시 config.yml 의 types 전체 처리",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="파일 저장 없이 변경 예정만 출력",
-    )
+    parser.add_argument("--type", dest="type_names", action="append")
+    parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
 
 
@@ -571,7 +526,6 @@ def main() -> int:
 
     total_added = 0
     total_normalized = 0
-
     for type_name in type_names:
         added_count, normalized_count = sync_type(
             type_name=type_name,
