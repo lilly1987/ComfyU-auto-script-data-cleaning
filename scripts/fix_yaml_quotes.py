@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-char.yml 안의 작은따옴표 문자열을 YAML-safe 형태로 보정하는 전처리 스크립트.
+type/lora/*.yml 안의 작은따옴표 문자열을 YAML-safe 형태로 보정하는 전처리 스크립트.
 
 - YAML 파싱 전에 텍스트로 직접 처리
-- 기본 대상은 `char:` / `dress:` 라인
+- "작은따옴표로 시작하는 값"을 쓰는 라인을 대상으로 함
 - 바깥쪽 문자열 구분용 작은따옴표는 유지
 - 내부의 홀수 작은따옴표만 `''` 로 이스케이프
 
@@ -12,6 +12,7 @@ char.yml 안의 작은따옴표 문자열을 YAML-safe 형태로 보정하는 �
 -> char: 'kiki (delico''s nursery), blue eyes'
 """
 import argparse
+import glob
 import os
 import sys
 from typing import List, Tuple
@@ -24,14 +25,16 @@ if script_dir not in sys.path:
 from utils import ConfigLoader
 
 
-TARGET_KEYS = ("char:", "dress:")
-
-
 def should_process_line(line: str) -> bool:
     stripped = line.lstrip()
     if stripped.startswith("#"):
         return False
-    return any(stripped.startswith(key) for key in TARGET_KEYS)
+
+    if ":" not in stripped:
+        return False
+
+    _, _, value = stripped.partition(":")
+    return value.lstrip().startswith("'")
 
 
 def split_single_quoted_value(line: str) -> Tuple[str, str, str]:
@@ -106,9 +109,14 @@ def process_file(file_path: str, dry_run: bool = False) -> Tuple[int, List[int]]
     return len(changed_line_numbers), changed_line_numbers
 
 
+def find_target_files(type_dir: str) -> List[str]:
+    pattern = os.path.join(type_dir, "lora", "*.yml")
+    return sorted(glob.glob(pattern))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="char.yml 안의 깨진 작은따옴표를 YAML-safe 형태로 보정합니다."
+        description="type/lora/*.yml 안의 깨진 작은따옴표를 YAML-safe 형태로 보정합니다."
     )
     parser.add_argument(
         "--type",
@@ -131,39 +139,42 @@ def main() -> int:
     type_names = args.type_names or config.get_types()
 
     print("=" * 80)
-    print("char.yml 작은따옴표 전처리")
+    print("lora/*.yml 작은따옴표 전처리")
     print("=" * 80)
     print(f"처리 타입: {', '.join(type_names)}")
     if args.dry_run:
         print("모드: dry-run")
 
     total_changed = 0
+    total_files = 0
 
     for type_name in type_names:
-        file_path = os.path.join(data_dir, type_name, "lora", "char.yml")
-        print(f"\n[{type_name}] {file_path}")
+        type_dir = os.path.join(data_dir, type_name)
+        target_files = find_target_files(type_dir)
 
-        if not os.path.exists(file_path):
-            print("  경고: 파일이 없습니다.")
+        print(f"\n[{type_name}]")
+        if not target_files:
+            print("  경고: 처리할 *.yml 파일이 없습니다.")
             continue
 
-        changed_count, line_numbers = process_file(file_path, dry_run=args.dry_run)
-        total_changed += changed_count
+        for file_path in target_files:
+            changed_count, line_numbers = process_file(file_path, dry_run=args.dry_run)
+            total_files += 1
 
-        if changed_count == 0:
-            print("  [OK] 수정할 줄이 없습니다.")
-            continue
+            if changed_count == 0:
+                print(f"  [OK] {os.path.basename(file_path)}: 수정할 줄이 없습니다.")
+                continue
 
-        print(f"  수정 줄 수: {changed_count}")
-        print(f"  줄 번호: {', '.join(map(str, line_numbers[:30]))}")
-        if len(line_numbers) > 30:
-            print(f"  ... 외 {len(line_numbers) - 30}줄")
-        if args.dry_run:
-            print("  dry-run 이므로 저장하지 않았습니다.")
-        else:
-            print("  [OK] 저장 완료")
+            total_changed += changed_count
+            print(f"  [FIX] {os.path.basename(file_path)}: {changed_count}줄")
+            print(f"        줄 번호: {', '.join(map(str, line_numbers[:20]))}")
+            if len(line_numbers) > 20:
+                print(f"        ... 외 {len(line_numbers) - 20}줄")
+            if args.dry_run:
+                print("        dry-run 이므로 저장하지 않았습니다.")
 
-    print(f"\n총 수정 줄 수: {total_changed}")
+    print(f"\n총 검사 파일 수: {total_files}")
+    print(f"총 수정 줄 수: {total_changed}")
     return 0
 
 
