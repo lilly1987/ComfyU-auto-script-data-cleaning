@@ -8,14 +8,9 @@ char.yml 의 positive.char 태그를 char / dress 로 자동 분리하는 스크
 - 나머지 태그는 positive.char 에 유지
 - {a,b|c,d} 같은 선택 구조를 가능한 한 보존
 
-선택적으로 config.yml 의 char 섹션에 아래 키를 추가해 확장할 수 있다.
-  char:
-    char_feature_tags:
-      - 'long hair'
-      - '/.* eyes.*/'
-
-현재 로직에서는 dress 로 분류되지 않은 태그는 기본적으로 char 에 남기므로
-char_feature_tags 는 문서화/확장용 성격이 강하다.
+config.yml 의 char.char_feature_tags 를 사용해 얼굴/머리/눈/귀/체형 같은
+캐릭터 외형 태그를 더 명시적으로 char 쪽으로 분류할 수 있다.
+분류 우선순위는 excluded > char_feature > dress > 기본 char 이다.
 """
 import argparse
 import os
@@ -146,6 +141,7 @@ def classify_items(
     items: List[Any],
     excluded_tags: List[str],
     dress_tags: List[str],
+    char_feature_tags: List[str],
 ) -> Tuple[List[Any], List[Any], List[str]]:
     char_items: List[Any] = []
     dress_items: List[Any] = []
@@ -158,7 +154,7 @@ def classify_items(
 
             for option in item.options:
                 option_char, option_dress, option_removed = classify_items(
-                    option, excluded_tags, dress_tags
+                    option, excluded_tags, dress_tags, char_feature_tags
                 )
                 char_options.append(option_char)
                 dress_options.append(option_dress)
@@ -176,6 +172,11 @@ def classify_items(
 
         if TagProcessor.is_tag_excluded(tag, excluded_tags):
             removed_tags.append(tag)
+            continue
+
+        # 얼굴/머리/눈 같은 외형 태그는 dress 규칙보다 우선해서 char 에 남긴다.
+        if char_feature_tags and TagProcessor.is_tag_excluded(tag, char_feature_tags):
+            char_items.append(tag)
             continue
 
         if dress_tags and TagProcessor.is_tag_excluded(tag, dress_tags):
@@ -233,6 +234,7 @@ def process_entry(
     entry: Dict[str, Any],
     excluded_tags: List[str],
     dress_tags: List[str],
+    char_feature_tags: List[str],
 ) -> Optional[Dict[str, Any]]:
     positive = entry.get("positive")
     if not isinstance(positive, dict):
@@ -244,7 +246,7 @@ def process_entry(
 
     parsed = parse_items(char_value)
     new_char_items, new_dress_items, removed_tags = classify_items(
-        parsed, excluded_tags, dress_tags
+        parsed, excluded_tags, dress_tags, char_feature_tags
     )
 
     new_char_value = render_items(new_char_items)
@@ -289,6 +291,7 @@ def process_char_yml(
     yml_path: str,
     excluded_tags: List[str],
     dress_tags: List[str],
+    char_feature_tags: List[str],
     dry_run: bool = False,
 ) -> Tuple[int, int, List[str]]:
     yaml_handler = YAMLHandler(allow_duplicate_keys=True)
@@ -307,7 +310,7 @@ def process_char_yml(
         if normalize_bool(value.get("skip", False)):
             continue
 
-        result = process_entry(value, excluded_tags, dress_tags)
+        result = process_entry(value, excluded_tags, dress_tags, char_feature_tags)
         if not result or not result["changed"]:
             continue
 
@@ -338,6 +341,7 @@ def process_type(
     data_dir: str,
     excluded_tags: List[str],
     dress_tags: List[str],
+    char_feature_tags: List[str],
     dry_run: bool = False,
 ) -> Tuple[int, List[str]]:
     print(f"\n{'=' * 80}")
@@ -353,6 +357,7 @@ def process_type(
         yml_path=yml_path,
         excluded_tags=excluded_tags,
         dress_tags=dress_tags,
+        char_feature_tags=char_feature_tags,
         dry_run=dry_run,
     )
 
@@ -414,6 +419,7 @@ def main() -> int:
             data_dir=data_dir,
             excluded_tags=excluded_tags,
             dress_tags=dress_tags,
+            char_feature_tags=char_feature_tags,
             dry_run=args.dry_run,
         )
         total_changed += changed_count
