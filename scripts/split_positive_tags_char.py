@@ -217,7 +217,12 @@ def extract_dress_suffix(dress_value: str) -> str:
 
 def build_dress_field(structure: str, suffix: str) -> str:
     if structure:
-        return f"{{  {{{structure}}}  |{suffix}}},"
+        group_count = len([part for part in split_top_level(structure, "|") if part.strip()])
+        if group_count > 1:
+            rendered_structure = f"{{{structure}}}"
+        else:
+            rendered_structure = structure
+        return f"{{  {rendered_structure}  |{suffix}}},"
     return f"{{   |{suffix}}},"
 
 
