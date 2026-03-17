@@ -32,6 +32,7 @@ from utils import ConfigLoader, TagProcessor, YAMLHandler
 
 
 DEFAULT_SKIP = False
+AUTO_SKIP = "auto"
 DEFAULT_WEIGHT = 3
 DEFAULT_FAVORITES = 1
 DEFAULT_STEPS = [30]
@@ -271,6 +272,26 @@ def ensure_scalar(parent: Dict[str, Any], key: str, default: Any) -> bool:
     return True
 
 
+def is_manual_skip_value(value: Any) -> bool:
+    if value is True:
+        return True
+    if isinstance(value, str) and value.strip().lower() in {"true", "auto"}:
+        return True
+    return False
+
+
+def should_mark_auto_skip(value: Any) -> bool:
+    if value is None:
+        return True
+    if value is False:
+        return True
+    if isinstance(value, int):
+        return value == 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"", "false", "0"}
+    return False
+
+
 def ensure_list(parent: Dict[str, Any], key: str, default: List[Any]) -> bool:
     value = parent.get(key)
     if isinstance(value, list) and value:
@@ -355,7 +376,7 @@ def normalize_entry(entry: Dict[str, Any], metadata: Optional[Dict[str, Any]] = 
 def render_new_entry_text(key: str, metadata: Dict[str, Any]) -> str:
     lines = [
         f"'{key}':",
-        f"  skip: {str(DEFAULT_SKIP).lower()}",
+        f"  skip: {AUTO_SKIP}",
         f"  weight: {DEFAULT_WEIGHT}",
         f"  favorites: {DEFAULT_FAVORITES}",
     ]
@@ -489,6 +510,9 @@ def sync_type(
 
         metadata = metadata_cache.get(str(key), {})
         changes = normalize_entry(value, metadata)
+        if changes > 0 and should_mark_auto_skip(value.get("skip")):
+            value["skip"] = AUTO_SKIP
+            changes += 1
         if changes > 0:
             normalized_count += 1
             print(f"    * 구조/메타 보정: {key}")
