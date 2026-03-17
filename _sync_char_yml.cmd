@@ -26,3 +26,4 @@ set "EXIT_CODE=%ERRORLEVEL%"
 
 popd >nul 2>&1
 exit /b %EXIT_CODE%
+pause
