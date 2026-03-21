@@ -144,7 +144,7 @@ def reorder_entry_keys(entry: Dict[str, Any]) -> CommentedMap:
         reordered["favorites"] = entry["favorites"]
     reordered["skip"] = entry.get("skip", False)
     if "favorites" not in entry:
-        reordered.yaml_set_comment_before_after_key("skip", before="favorites: 1")
+        reordered.yaml_set_comment_before_after_key("skip", before="  favorites: 1")
 
     for key, value in entry.items():
         if key in {"weight", "favorites", "skip"}:
