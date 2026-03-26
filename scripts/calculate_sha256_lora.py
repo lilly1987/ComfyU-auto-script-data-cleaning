@@ -11,7 +11,7 @@ import threading
 import signal
 import shutil
 import yaml
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 from collections import defaultdict
 from datetime import datetime
 
@@ -146,6 +146,18 @@ def find_duplicate_hashes(sha256_dict: Dict[str, str]) -> Dict[str, list]:
     return duplicates
 
 
+def get_existing_safetensors_names(folder_dir: str) -> Set[str]:
+    """현재 디스크에 존재하는 safetensors 파일명(stem)만 수집합니다."""
+    if not os.path.exists(folder_dir):
+        return set()
+
+    pattern = os.path.join(folder_dir, '*.safetensors')
+    return {
+        os.path.splitext(os.path.basename(file_path))[0]
+        for file_path in glob.glob(pattern)
+    }
+
+
 def save_sha256_yaml(sha256_dict: Dict[str, str], output_path: str, yaml_handler: YAMLHandler) -> bool:
     """SHA256 딕셔너리를 YAML 파일로 저장합니다."""
     try:
@@ -164,9 +176,19 @@ def save_sha256_yaml(sha256_dict: Dict[str, str], output_path: str, yaml_handler
         return False
 
 
-def save_duplicate_hashes_yaml(sha256_dict: Dict[str, str], output_path: str, yaml_handler: YAMLHandler) -> bool:
+def save_duplicate_hashes_yaml(sha256_dict: Dict[str, str], output_path: str,
+                               yaml_handler: YAMLHandler,
+                               existing_filenames: Optional[Set[str]] = None) -> bool:
     """중복 해시를 {해시: [파일들]} 형태로 YAML 파일에 저장합니다."""
-    duplicates = find_duplicate_hashes(sha256_dict)
+    duplicate_target = sha256_dict
+    if existing_filenames is not None:
+        duplicate_target = {
+            filename: hash_value
+            for filename, hash_value in sha256_dict.items()
+            if filename in existing_filenames
+        }
+
+    duplicates = find_duplicate_hashes(duplicate_target)
     
     if not duplicates:
         # 중복이 없으면 기존 파일 삭제 시도
@@ -215,13 +237,14 @@ def process_char(type_name: str, config: ConfigLoader, yaml_handler: YAMLHandler
         lora_sha256_dict = get_safetensors_sha256(
             lora_dir, existing_loras, yaml_handler, lora_output_yaml
         )
+        existing_lora_names = get_existing_safetensors_names(lora_dir)
         
         # 최종 저장
         if lora_sha256_dict:
             save_sha256_yaml(lora_sha256_dict, lora_output_yaml, yaml_handler)
             # 중복 해시 저장
             lora_dup_output = lora_output_yaml.replace('sha256_char.yml', 'sha256_char_duplicates.yml')
-            save_duplicate_hashes_yaml(lora_sha256_dict, lora_dup_output, yaml_handler)
+            save_duplicate_hashes_yaml(lora_sha256_dict, lora_dup_output, yaml_handler, existing_lora_names)
             print(f"[char] {type_name} 처리 완료")
         else:
             print(f"[char] {type_name}: 처리할 파일이 없습니다.")
@@ -258,7 +281,8 @@ def process_lora(type_name: str, config: ConfigLoader, yaml_handler: YAMLHandler
             save_sha256_yaml(lora_sha256_dict, lora_output_yaml, yaml_handler)
             # 중복 해시 저장
             lora_dup_output = lora_output_yaml.replace('sha256_loras.yml', 'sha256_loras_duplicates.yml')
-            save_duplicate_hashes_yaml(lora_sha256_dict, lora_dup_output, yaml_handler)
+            existing_lora_names = get_existing_safetensors_names(lora_dir)
+            save_duplicate_hashes_yaml(lora_sha256_dict, lora_dup_output, yaml_handler, existing_lora_names)
             print(f"[LoRA] {type_name} 처리 완료")
         else:
             print(f"[LoRA] {type_name}: 처리할 파일이 없습니다.")
@@ -290,13 +314,16 @@ def process_checkpoint(type_name: str, config: ConfigLoader, yaml_handler: YAMLH
         checkpoint_sha256_dict = get_safetensors_sha256(
             checkpoint_dir, existing_checkpoints, yaml_handler, checkpoint_output_yaml, save_cnt=1
         )
+        existing_checkpoint_names = get_existing_safetensors_names(checkpoint_dir)
         
         # 최종 저장
         if checkpoint_sha256_dict:
             save_sha256_yaml(checkpoint_sha256_dict, checkpoint_output_yaml, yaml_handler)
             # 중복 해시 저장
             checkpoint_dup_output = checkpoint_output_yaml.replace('sha256_checkpoints.yml', 'sha256_checkpoints_duplicates.yml')
-            save_duplicate_hashes_yaml(checkpoint_sha256_dict, checkpoint_dup_output, yaml_handler)
+            save_duplicate_hashes_yaml(
+                checkpoint_sha256_dict, checkpoint_dup_output, yaml_handler, existing_checkpoint_names
+            )
             print(f"[Checkpoint] {type_name} 처리 완료")
         else:
             print(f"[Checkpoint] {type_name}: 처리할 파일이 없습니다.")

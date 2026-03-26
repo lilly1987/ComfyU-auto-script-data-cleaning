@@ -25,6 +25,20 @@ TEMPLATE = {
         "dress": "{   |8::__dress__},",
     },
 }
+LEADING_EMPTY_ENTRY = (
+    "'': # 3\n"
+    "  weight: 3\n"
+    "#   favorites: 1\n"
+    "  skip: 1\n"
+    "  positive:\n"
+    "    char: ' , '\n"
+    "    dress: '{ { | } |8::__dress__},'\n"
+    "  # strength_clip: 1\n"
+    "  # strength_model:\n"
+    "    # - 0.5\n"
+    "    # - 0.75\n"
+)
+LEADING_EMPTY_ENTRY_COUNT = 4
 
 
 def configure_console_encoding() -> None:
@@ -173,6 +187,53 @@ def reorder_main_entries(yml_path: str, dry_run: bool = False) -> int:
     return reordered_count
 
 
+def ensure_leading_empty_entries(
+    yml_path: str,
+    count: int = LEADING_EMPTY_ENTRY_COUNT,
+    dry_run: bool = False,
+) -> int:
+    if count <= 0:
+        return 0
+
+    try:
+        with open(yml_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    except Exception:
+        return 0
+
+    idx = 0
+    while idx < len(lines) and not lines[idx].strip():
+        idx += 1
+
+    existing_count = 0
+    current = idx
+    while current < len(lines) and lines[current].startswith("''"):
+        existing_count += 1
+        current += 1
+        while current < len(lines):
+            line = lines[current]
+            if line.startswith("  ") or line.startswith("#") or not line.strip():
+                current += 1
+                continue
+            break
+
+    desired_prefix = LEADING_EMPTY_ENTRY * count
+    remainder = "".join(lines[current:]).lstrip("\r\n")
+    new_content = desired_prefix + remainder
+    original_content = "".join(lines)
+
+    if original_content == new_content:
+        return 0
+
+    if dry_run:
+        return max(count, existing_count)
+
+    with open(yml_path, "w", encoding="utf-8") as f:
+        f.write(new_content)
+
+    return max(count, existing_count)
+
+
 def mark_auto_skip_entries(yml_path: str, target_keys: List[str], dry_run: bool = False) -> int:
     if not target_keys:
         return 0
@@ -263,6 +324,10 @@ def sync_type(
         dry_run=dry_run,
     )
     reordered_count = reorder_main_entries(yml_path=yml_path, dry_run=dry_run)
+    leading_empty_count = ensure_leading_empty_entries(
+        yml_path=yml_path,
+        dry_run=dry_run,
+    )
 
     if changed_entries == 0:
         print("  [OK] 후처리 변경 없음")
@@ -272,6 +337,9 @@ def sync_type(
         print(f"  skip:auto 설정: {auto_skip_count}개")
     if reordered_count > 0:
         print(f"  key 순서 정리: {reordered_count}개")
+
+    if leading_empty_count > 0:
+        print(f"  leading empty key add: {LEADING_EMPTY_ENTRY_COUNT}")
 
     return added_count, changed_entries
 
