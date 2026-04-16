@@ -23,12 +23,12 @@ max_tags = 64
 
 # 기본 템플릿
 template = {
+    'skip': False,
     'weight': 150,
     'positive': {
         'char': "1girl , ",
         'dress': "{   |4::__dress__},"
     },
-    'skip': False
 }
 
 def process_type(type_name: str):

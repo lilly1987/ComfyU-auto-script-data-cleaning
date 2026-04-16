@@ -7,17 +7,20 @@ set "SCRIPT_PATH=%ROOT%scripts\sync_char_yml.py"
 
 if not exist "%PYTHON_EXE%" (
     echo error: python not found: %PYTHON_EXE%
+	pause
     exit /b 1
 )
 
 if not exist "%SCRIPT_PATH%" (
     echo error: script not found: %SCRIPT_PATH%
+	pause
     exit /b 1
 )
 
 pushd "%ROOT%" >nul 2>&1
 if errorlevel 1 (
     echo error: failed to change directory: %ROOT%
+	pause
     exit /b 1
 )
 
@@ -25,5 +28,6 @@ if errorlevel 1 (
 set "EXIT_CODE=%ERRORLEVEL%"
 
 popd >nul 2>&1
+pause
 exit /b %EXIT_CODE%
 pause
