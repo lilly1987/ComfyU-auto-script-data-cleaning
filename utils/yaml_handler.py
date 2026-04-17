@@ -57,9 +57,10 @@ class YAMLHandler:
         import os
         import shutil
         
+        temp_path = None
         try:
             os.makedirs(os.path.dirname(yml_path), exist_ok=True)
-            # 임시 파일을 같은 디렉토리에 생성
+            # 임시 파일을 같은 디렉토리에 생성하고 완전히 작성합니다.
             with tempfile.NamedTemporaryFile(
                 mode='w',
                 encoding='utf-8',
@@ -80,6 +81,12 @@ class YAMLHandler:
             return True
         except Exception as e:
             print(f"  오류: YML 파일 저장 실패: {e}")
+            # 임시 파일이 남아 있으면 삭제
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except Exception:
+                    pass
             return False
     
     @staticmethod
