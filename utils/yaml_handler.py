@@ -53,10 +53,30 @@ class YAMLHandler:
         Returns:
             성공 여부
         """
+        import tempfile
+        import os
+        import shutil
+        
         try:
             os.makedirs(os.path.dirname(yml_path), exist_ok=True)
-            with open(yml_path, 'w', encoding='utf-8') as f:
-                self.yaml.dump(yml_data, f)
+            # 임시 파일을 같은 디렉토리에 생성
+            with tempfile.NamedTemporaryFile(
+                mode='w',
+                encoding='utf-8',
+                dir=os.path.dirname(yml_path),
+                delete=False,
+                suffix='.tmp'
+            ) as temp_file:
+                self.yaml.dump(yml_data, temp_file)
+                temp_path = temp_file.name
+            
+            # 임시 파일을 원본 파일로 atomic하게 교체
+            try:
+                os.replace(temp_path, yml_path)
+            except PermissionError:
+                # Windows에서 파일이 열려있을 경우, 수동으로 복사 후 삭제
+                shutil.copy2(temp_path, yml_path)
+                os.remove(temp_path)
             return True
         except Exception as e:
             print(f"  오류: YML 파일 저장 실패: {e}")

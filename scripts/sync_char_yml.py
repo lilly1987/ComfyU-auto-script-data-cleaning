@@ -228,8 +228,28 @@ def ensure_leading_empty_entries(
     if dry_run:
         return max(count, existing_count)
 
-    with open(yml_path, "w", encoding="utf-8") as f:
-        f.write(new_content)
+    import tempfile
+    import os
+    import shutil
+    
+    # 임시 파일을 같은 디렉토리에 생성
+    with tempfile.NamedTemporaryFile(
+        mode='w',
+        encoding='utf-8',
+        dir=os.path.dirname(yml_path),
+        delete=False,
+        suffix='.tmp'
+    ) as temp_file:
+        temp_file.write(new_content)
+        temp_path = temp_file.name
+    
+    # 임시 파일을 원본 파일로 atomic하게 교체
+    try:
+        os.replace(temp_path, yml_path)
+    except PermissionError:
+        # Windows에서 파일이 열려있을 경우, 수동으로 복사 후 삭제
+        shutil.copy2(temp_path, yml_path)
+        os.remove(temp_path)
 
     return max(count, existing_count)
 
