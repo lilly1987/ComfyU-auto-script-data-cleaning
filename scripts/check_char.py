@@ -76,13 +76,18 @@ def process_type(type_name: str):
     print(f"    - 누락된 키 개수: {len(missing)}")
 
     cnt=0
+    autocnt=0
     for key in sorted(matched):
         d=yml_data[key]
         if d.get('skip',False):
             cnt+=1
+        if d.get('skip',False)=='auto':
+            autocnt+=1
 
     print(f"    - 스킵된 키 개수: {cnt}")
+    print(f"    - auto 키 개수: {autocnt}")
     print(f"    - 스킵되지 않은 키 개수: {len(matched)-cnt}")
+    print(f"    - auto되지 않은 키 개수: {len(matched)-autocnt}")
 
 if __name__ == "__main__":
     
