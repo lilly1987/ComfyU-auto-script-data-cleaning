@@ -470,12 +470,13 @@ def sync_type(
         if not isinstance(value, dict):
             continue
 
+        if not should_mark_auto_skip(value.get("skip")):
+            continue
+
         metadata = metadata_cache.get(str(key), {})
         changes = normalize_entry(value, metadata)
-        if changes > 0 and should_mark_auto_skip(value.get("skip")):
-            value["skip"] = AUTO_SKIP
-            changes += 1
         if changes > 0:
+            value["skip"] = AUTO_SKIP
             normalized_count += 1
             print(f"    * 구조/메타 보정: {key}")
 
