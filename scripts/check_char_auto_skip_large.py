@@ -36,17 +36,20 @@ def load_yml(yml_path: str) -> dict:
         return yaml.safe_load(f) or {}
 
 
-def process_type(type_name: str, comfui_dir: str, data_dir: str) -> None:
+def process_type(type_name: str, comfui_dir: str, data_dir: str) -> list:
     lora_dir = os.path.join(comfui_dir, "models", "loras", type_name, "char")
     yml_path = os.path.join(data_dir, type_name, "lora", "char.yml")
 
     if not os.path.exists(yml_path):
         print(f"warning: char.yml not found: {yml_path}", file=sys.stderr)
-        return
+        return []
 
     yml_data = load_yml(yml_path)
-    count=0
-    for key in sorted(k for k in yml_data.keys() if k):
+    results = []
+    for key in yml_data.keys():
+        if not key:
+            continue
+
         entry = yml_data.get(key)
         if not isinstance(entry, dict):
             continue
@@ -58,11 +61,10 @@ def process_type(type_name: str, comfui_dir: str, data_dir: str) -> None:
         if not os.path.isfile(safetensors_path):
             continue
 
-        if os.path.getsize(safetensors_path) < MIN_SIZE_BYTES:
-            continue
-        count+=1
-        print(f"{type_name}\t{key}")
-    print(f"total\t{count}")
+        size = os.path.getsize(safetensors_path)
+        if size >= MIN_SIZE_BYTES:
+            results.append((type_name, key, size))
+    return results
 
 
 
@@ -73,8 +75,17 @@ def main() -> int:
     comfui_dir = config.get_comfui_dir()
     data_dir = config.get_data_dir()
 
+    all_results = []
     for type_name in config.get_types():
-        process_type(type_name, comfui_dir, data_dir)
+        all_results.extend(process_type(type_name, comfui_dir, data_dir))
+
+    # 용량(size) 기준 내림차순 정렬
+    all_results.sort(key=lambda x: x[2], reverse=True)
+
+    for type_name, key, size in all_results:
+        print(f"{type_name}\t{key}\t({size / (1024 * 1024):.1f} MB)")
+
+    print(f"total\t{len(all_results)}")
 
     return 0
 
