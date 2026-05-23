@@ -79,6 +79,9 @@ def process_type(type_name: str):
     autocnt=0
     for key in sorted(matched):
         d=yml_data[key]
+        if not isinstance(d, dict):
+            print(f"  [경고] YML 데이터 형식 오류: {key}의 값이 딕셔너리가 아님")
+            continue
         if d.get('skip',False):
             cnt+=1
         if d.get('skip',False)=='auto':
