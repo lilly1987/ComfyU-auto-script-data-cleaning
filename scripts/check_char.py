@@ -88,8 +88,8 @@ def process_type(type_name: str):
             autocnt+=1
 
     print(f"    - 스킵된 키 개수: {cnt}")
-    print(f"    - auto 키 개수: {autocnt}")
     print(f"    - 스킵되지 않은 키 개수: {len(matched)-cnt}")
+    print(f"    - auto 키 개수: {autocnt}")
     print(f"    - auto되지 않은 키 개수: {len(matched)-autocnt}")
 
 if __name__ == "__main__":
