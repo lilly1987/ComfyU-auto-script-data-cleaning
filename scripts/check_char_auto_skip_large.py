@@ -28,7 +28,8 @@ def configure_console_encoding() -> None:
 
 
 def is_auto_skip(value: Any) -> bool:
-    return isinstance(value, str) and value.strip().lower() == "auto"
+    # return isinstance(value, str) and value.strip().lower() == "auto"
+    return value in (False, None) or (isinstance(value, str) and value.strip().lower() == "auto")
 
 
 def load_yml(yml_path: str) -> dict:
@@ -80,7 +81,8 @@ def main() -> int:
         all_results.extend(process_type(type_name, comfui_dir, data_dir))
 
     # 용량(size) 기준 내림차순 정렬
-    all_results.sort(key=lambda x: x[2], reverse=True)
+    # all_results.sort(key=lambda x: x[2], reverse=True)
+    all_results.sort(key=lambda x: x[2])
 
     for type_name, key, size in all_results:
         print(f"{type_name}\t{key}\t({size / (1024 * 1024):.1f} MB)")

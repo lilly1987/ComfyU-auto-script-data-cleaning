@@ -18,13 +18,15 @@ if not exist "%SCRIPT_PATH%" (
     pause
     exit /b 1
 )
-
+:top
 "%PYTHON_EXE%" "%SCRIPT_PATH%"
-pause
+@REM pause
 
 if errorlevel 1 (
     echo.
     echo Error occurred.
-    pause
-    exit /b 1
+    @REM pause
+    @REM exit /b 1
 )
+pause
+goto top
