@@ -70,10 +70,16 @@ def process_type(type_name: str):
     yml_keys_cleaned = {k for k in yml_keys if k}
     missing = safetensors_keys - yml_keys_cleaned
     matched = safetensors_keys & yml_keys_cleaned
+
+    total_safetensors = len(safetensors_keys)
+    matched_count = len(matched)
+    matched_pct = (matched_count / total_safetensors * 100) if total_safetensors > 0 else 0
+    missing_pct = (len(missing) / total_safetensors * 100) if total_safetensors > 0 else 0
+
     # return
     print(f"\n  비교 결과:")
-    print(f"    - 일치하는 키: {len(matched)}")
-    print(f"    - 누락된 키 개수: {len(missing)}")
+    print(f"    - 일치하는 키: {matched_count} ({matched_pct:.1f}%)")
+    print(f"    - 누락된 키 개수: {len(missing)} ({missing_pct:.1f}%)")
 
     cnt=0
     autocnt=0
@@ -87,10 +93,15 @@ def process_type(type_name: str):
         if d.get('skip',False)=='auto':
             autocnt+=1
 
-    print(f"    - 스킵된 키 개수: {cnt}")
-    print(f"    - 스킵되지 않은 키 개수: {len(matched)-cnt}")
-    print(f"    - auto 키 개수: {autocnt}")
-    print(f"    - auto되지 않은 키 개수: {len(matched)-autocnt}")
+    skip_pct = (cnt / matched_count * 100) if matched_count > 0 else 0
+    non_skip_pct = ((matched_count - cnt) / matched_count * 100) if matched_count > 0 else 0
+    auto_pct = (autocnt / matched_count * 100) if matched_count > 0 else 0
+    non_auto_pct = ((matched_count - autocnt) / matched_count * 100) if matched_count > 0 else 0
+
+    print(f"    - 스킵된 키 개수: {cnt} ({skip_pct:.1f}%)")
+    print(f"    - 스킵되지 않은 키 개수: {matched_count - cnt} ({non_skip_pct:.1f}%)")
+    print(f"    - auto 키 개수: {autocnt} ({auto_pct:.1f}%)")
+    print(f"    - auto되지 않은 키 개수: {matched_count - autocnt} ({non_auto_pct:.1f}%)")
 
 if __name__ == "__main__":
     
@@ -105,4 +116,3 @@ if __name__ == "__main__":
     print(f"\n{'='*80}")
     print("모든 처리 완료!")
     print(f"{'='*80}")
-
