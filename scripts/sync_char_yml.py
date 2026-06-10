@@ -22,7 +22,7 @@ TEMPLATE = {
     "weight": 3,
     "positive": {
         "char": " ",
-        "dress": "{   |8::__dress__},",
+        "dress": "{   |8::__dress_set/dress_set__},",
     },
 }
 LEADING_EMPTY_ENTRY = (
@@ -32,7 +32,7 @@ LEADING_EMPTY_ENTRY = (
     "  skip: 1\n"
     "  positive:\n"
     "    char: ' , '\n"
-    "    dress: '{ { | } |8::__dress__},'\n"
+    "    dress: '{ { | } |8::__dress_set/dress_set__},'\n"
     "  # strength_clip: 1\n"
     "  # strength_model:\n"
     "    # - 0.5\n"

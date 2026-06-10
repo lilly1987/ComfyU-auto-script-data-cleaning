@@ -375,6 +375,7 @@ def render_new_entry_text(key: str, metadata: Dict[str, Any]) -> str:
         lines.append("  #negative:")
         lines.append("    #checkpoint: '  '")
         lines.append("    #quality: ' ,'")
+    lines.append("    #realistic: ' realistic, photorealistic,'")
 
     if positive_meta:
         positive_checkpoint = positive_meta.get("checkpoint", " ").replace("'", "''")
@@ -389,6 +390,7 @@ def render_new_entry_text(key: str, metadata: Dict[str, Any]) -> str:
         lines.append("    #checkpoint: ' '")
         lines.append("    #quality: ' '")
         lines.append("    #anime: ''")
+    lines.append("    #realistic: ' realistic, photorealistic,'")
 
     lines.append("  sampler_name:")
     for item in sampler:
