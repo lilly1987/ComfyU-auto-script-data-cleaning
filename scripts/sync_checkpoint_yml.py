@@ -421,8 +421,7 @@ def append_missing_entries(
 
 def sync_type(
     type_name: str,
-    comfui_dir: str,
-    data_dir: str,
+    config: ConfigLoader,
     yaml_handler: YAMLHandler,
     dry_run: bool = False,
 ) -> Tuple[int, int]:
@@ -430,9 +429,11 @@ def sync_type(
     print(f"[{type_name}] 처리 시작")
     print(f"{'=' * 80}")
 
+    data_dir = config.get_data_dir()
     yml_path = os.path.join(data_dir, type_name, "checkpoint", "checkpoint.yml")
-    checkpoint_dir = os.path.join(comfui_dir, "models", "checkpoints", type_name)
-
+    checkpoint_dir = config.get_checkpoint_models_dir(type_name)
+    print(f"  checkpoint.yml 경로: {yml_path}")
+    print(f"  checkpoint 폴더 경로: {checkpoint_dir}")
     if not os.path.exists(yml_path):
         print(f"  경고: checkpoint.yml 이 없습니다: {yml_path}")
         return 0, 0
@@ -515,9 +516,6 @@ def main() -> int:
     args = parse_args()
     config = ConfigLoader()
     yaml_handler = YAMLHandler(allow_duplicate_keys=True)
-
-    comfui_dir = config.get_comfui_dir()
-    data_dir = config.get_data_dir()
     type_names = args.type_names or config.get_types()
 
     print("=" * 80)
@@ -532,8 +530,7 @@ def main() -> int:
     for type_name in type_names:
         added_count, normalized_count = sync_type(
             type_name=type_name,
-            comfui_dir=comfui_dir,
-            data_dir=data_dir,
+            config=config,
             yaml_handler=yaml_handler,
             dry_run=args.dry_run,
         )

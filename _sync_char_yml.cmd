@@ -2,7 +2,7 @@
 setlocal
 
 set "ROOT=%~dp0"
-set "PYTHON_EXE=W:\ComfyUI_windows_portable\python_embeded\python.exe"
+set "PYTHON_EXE=W:\ComfyUI_windows_portable2\python_embeded\python.exe"
 set "SCRIPT_PATH=%ROOT%scripts\sync_char_yml.py"
 
 if not exist "%PYTHON_EXE%" (

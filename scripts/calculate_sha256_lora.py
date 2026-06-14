@@ -294,10 +294,9 @@ def process_lora(type_name: str, config: ConfigLoader, yaml_handler: YAMLHandler
 def process_checkpoint(type_name: str, config: ConfigLoader, yaml_handler: YAMLHandler):
     """Checkpoint 파일을 처리합니다 (별도 스레드)."""
     try:
-        comfui_dir = config.get_comfui_dir()
         data_dir = config.get_data_dir()
         
-        checkpoint_dir = os.path.join(comfui_dir, 'models', 'checkpoints', type_name)
+        checkpoint_dir = config.get_checkpoint_models_dir(type_name)
         checkpoint_output_yaml = os.path.join(data_dir, type_name, 'sha256_checkpoints.yml')
         
         print(f"\n[Checkpoint] {type_name} 처리 시작")

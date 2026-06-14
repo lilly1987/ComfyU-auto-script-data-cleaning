@@ -97,3 +97,15 @@ class ConfigLoader:
         if section == "lora":
             return self.get("lora", {}).get("max_tags", 64)
         return 64
+
+    def get_checkpoint_models_dir(self, type_name: str) -> str:
+        """Get the model directory for checkpoints based on type mapping in modelsPath."""
+        models_paths = self.get("modelsPath", {})
+        if isinstance(models_paths, dict) and type_name in models_paths:
+            path = models_paths[type_name]
+            if os.path.isabs(path):
+                return path
+            return os.path.join(self.get_comfui_dir(), path,type_name)
+
+        # Default fallback: models/checkpoints/<type_name>
+        return os.path.join(self.get_comfui_dir(), "models", "checkpoints", type_name)
