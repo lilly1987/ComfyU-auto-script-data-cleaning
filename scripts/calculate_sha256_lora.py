@@ -168,9 +168,10 @@ def save_sha256_yaml(sha256_dict: Dict[str, str], output_path: str, yaml_handler
             print(f"  디렉토리 생성: {output_dir}")
         
         # YAML 저장
-        yaml_handler.save(output_path, sha256_dict)
-        print(f"  저장 완료: {output_path} ({len(sha256_dict)}개 항목)")
-        return True
+        if yaml_handler.save(output_path, sha256_dict):
+            print(f"  저장 완료: {output_path} ({len(sha256_dict)}개 항목)")
+            return True
+        return False
     except Exception as e:
         print(f"  오류: YAML 저장 실패 - {e}")
         return False
@@ -206,9 +207,10 @@ def save_duplicate_hashes_yaml(sha256_dict: Dict[str, str], output_path: str,
             os.makedirs(output_dir, exist_ok=True)
         
         # {해시: [파일들]} 형태로 저장
-        yaml_handler.save(output_path, duplicates)
-        print(f"  저장 완료: {output_path} ({len(duplicates)}개 중복 그룹)")
-        return True
+        if yaml_handler.save(output_path, duplicates):
+            print(f"  저장 완료: {output_path} ({len(duplicates)}개 중복 그룹)")
+            return True
+        return False
     except Exception as e:
         print(f"  오류: 중복 해시 저장 실패 - {e}")
         return False
@@ -347,9 +349,6 @@ def main():
         print("오류: config.yml에서 types을 찾을 수 없습니다.")
         return
     
-    # YAML 핸들러 생성
-    yaml_handler = YAMLHandler()
-    
     # 스레드 목록
     threads = []
     
@@ -362,7 +361,7 @@ def main():
         # LoRA 스레드
         char_thread = threading.Thread(
             target=process_char,
-            args=(type_name, config, yaml_handler),
+            args=(type_name, config, YAMLHandler()),
             name=f"Char-{type_name}"
         )
         threads.append(char_thread)
@@ -371,7 +370,7 @@ def main():
         # LoRA 스레드
         lora_thread = threading.Thread(
             target=process_lora,
-            args=(type_name, config, yaml_handler),
+            args=(type_name, config, YAMLHandler()),
             name=f"LoRA-{type_name}"
         )
         threads.append(lora_thread)
@@ -380,7 +379,7 @@ def main():
         # Checkpoint 스레드
         checkpoint_thread = threading.Thread(
             target=process_checkpoint,
-            args=(type_name, config, yaml_handler),
+            args=(type_name, config, YAMLHandler()),
             name=f"Checkpoint-{type_name}"
         )
         threads.append(checkpoint_thread)

@@ -105,7 +105,7 @@ class ConfigLoader:
             path = models_paths[type_name]
             if os.path.isabs(path):
                 return path
-            return os.path.join(self.get_comfui_dir(), path,type_name)
+            return os.path.join(self.get_comfui_dir(), path)
 
         # Default fallback: models/checkpoints/<type_name>
         return os.path.join(self.get_comfui_dir(), "models", "checkpoints", type_name)

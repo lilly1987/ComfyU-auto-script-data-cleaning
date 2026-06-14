@@ -10,8 +10,8 @@ types:
   # - Pony
 
 modelsPath:
-  IL: "models/checkpoints"
-  Anime: "models/diffusion_models"
+  IL: 'models\checkpoints'
+  Anime: 'models\diffusion_models'
 
 
 # --- char.yml 관련 설정 ---

@@ -446,7 +446,7 @@ def sync_type(
         print("  오류: checkpoint.yml 로드 실패")
         return 0, 0
 
-    file_map = get_checkpoint_file_map(checkpoint_dir)
+    file_map = get_checkpoint_file_map(os.path.join(checkpoint_dir, type_name))
     existing_keys = {key for key in yml_data.keys() if key}
     missing_keys = [key for key in file_map.keys() if key not in existing_keys]
     metadata_cache = {key: extract_metadata_from_file(path) for key, path in file_map.items()}
