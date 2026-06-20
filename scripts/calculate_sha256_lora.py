@@ -332,6 +332,43 @@ def process_checkpoint(type_name: str, config: ConfigLoader, yaml_handler: YAMLH
     except Exception as e:
         print(f"[Checkpoint] {type_name} 처리 중 오류: {e}")
 
+def process_diffusion_model(type_name: str, config: ConfigLoader, yaml_handler: YAMLHandler):
+    """Diffusion Model (UNet 등) 파일을 처리합니다 (별도 스레드)."""
+    try:
+        comfui_dir = config.get_comfui_dir()
+        data_dir = config.get_data_dir()
+        
+        # diffusion_models 폴더 경로 확인 (타입별 서브폴더 우선, 없으면 루트 확인)
+        diff_dir = os.path.join(comfui_dir, 'models', 'diffusion_models', type_name)
+        if not os.path.exists(diff_dir):
+            diff_dir = os.path.join(comfui_dir, 'models', 'diffusion_models')
+            
+        if not os.path.exists(diff_dir):
+            return
+            
+        output_yaml = os.path.join(data_dir, type_name, 'sha256_diffusion_models.yml')
+        
+        print(f"\n[Diffusion] {type_name} 처리 시작")
+        print(f"  원본 경로: {diff_dir}")
+        print(f"  저장 경로: {output_yaml}")
+        
+        existing_data = load_existing_sha256(output_yaml, yaml_handler)
+        sha256_dict = get_safetensors_sha256(
+            diff_dir, existing_data, yaml_handler, output_yaml, save_cnt=1
+        )
+        existing_names = get_existing_safetensors_names(diff_dir)
+        
+        if sha256_dict:
+            save_sha256_yaml(sha256_dict, output_yaml, yaml_handler)
+            dup_output = output_yaml.replace('sha256_diffusion_models.yml', 'sha256_diffusion_models_duplicates.yml')
+            save_duplicate_hashes_yaml(sha256_dict, dup_output, yaml_handler, existing_names)
+            print(f"[Diffusion] {type_name} 처리 완료")
+        else:
+            print(f"[Diffusion] {type_name}: 처리할 파일이 없습니다.")
+            
+    except Exception as e:
+        print(f"[Diffusion] {type_name} 처리 중 오류: {e}")
+
 
 def main():
     """메인 함수"""
@@ -384,6 +421,15 @@ def main():
         )
         threads.append(checkpoint_thread)
         checkpoint_thread.start()
+
+        # Diffusion Model 스레드
+        diff_thread = threading.Thread(
+            target=process_diffusion_model,
+            args=(type_name, config, YAMLHandler()),
+            name=f"Diffusion-{type_name}"
+        )
+        threads.append(diff_thread)
+        diff_thread.start()
     
     # 모든 스레드가 완료될 때까지 대기
     for thread in threads:

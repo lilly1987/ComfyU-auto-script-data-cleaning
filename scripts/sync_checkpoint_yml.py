@@ -437,16 +437,24 @@ def sync_type(
     if not os.path.exists(yml_path):
         print(f"  경고: checkpoint.yml 이 없습니다: {yml_path}")
         return 0, 0
-    if not os.path.exists(checkpoint_dir):
-        print(f"  경고: checkpoint 폴더가 없습니다: {checkpoint_dir}")
-        return 0, 0
 
     yml_data = yaml_handler.load(yml_path)
     if yml_data is None:
         print("  오류: checkpoint.yml 로드 실패")
         return 0, 0
 
-    file_map = get_checkpoint_file_map(os.path.join(checkpoint_dir, type_name))
+    # 탐색 폴더 취합 (기본 Checkpoint 및 Diffusion Models 경로 추가)
+    search_paths = [os.path.join(checkpoint_dir, type_name)]
+    comfui_root = config.get_comfui_dir()
+    search_paths.append(os.path.join(comfui_root, "models", "diffusion_models", type_name))
+    search_paths.append(os.path.join(comfui_root, "models", "diffusion_models")) # 루트 폴더 포함
+    
+    file_map = {}
+    for path in search_paths:
+        if os.path.exists(path):
+            file_map.update(get_checkpoint_file_map(path))
+    file_map = dict(sorted(file_map.items()))
+
     existing_keys = {key for key in yml_data.keys() if key}
     missing_keys = [key for key in file_map.keys() if key not in existing_keys]
     metadata_cache = {key: extract_metadata_from_file(path) for key, path in file_map.items()}
