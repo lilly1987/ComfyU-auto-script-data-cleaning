@@ -18,7 +18,7 @@ if not exist "%SCRIPT_PATH%" (
     pause
     exit /b 1
 )
-
+:TOP
 "%PYTHON_EXE%" "%SCRIPT_PATH%"
 
 if errorlevel 1 (
@@ -27,6 +27,6 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-
 pause
+goto TOP
 
