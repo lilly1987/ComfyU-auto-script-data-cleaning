@@ -117,18 +117,18 @@ def check_missing_loras(type_name: str, config: ConfigLoader, yaml_handler: YAML
     
     # 1. safetensors 파일 목록 가져오기
     safetensors_files = get_safetensors_files(lora_dir)
-    print(f"\n[1] SafeTensors 파일 목록 ({len(safetensors_files)}개):")
-    if safetensors_files:
-        for fname in sorted(safetensors_files)[:10]:
-            print(f"    - {fname}")
-        if len(safetensors_files) > 10:
-            print(f"    ... 그 외 {len(safetensors_files) - 10}개")
-    else:
-        print("    (없음)")
+    print(f"[1] SafeTensors 파일 목록 ({len(safetensors_files)}개):")
+    # if safetensors_files:
+    #     for fname in sorted(safetensors_files)[:10]:
+    #         print(f"    - {fname}")
+    #     if len(safetensors_files) > 10:
+    #         print(f"    ... 그 외 {len(safetensors_files) - 10}개")
+    # else:
+    #     print("    (없음)")
     
     # 2. WeightLora.yml에서 등록된 loras 가져오기
     if not os.path.exists(weight_lora_path):
-        print(f"\n경고: WeightLora.yml 파일이 없습니다: {weight_lora_path}")
+        print(f"경고: WeightLora.yml 파일이 없습니다: {weight_lora_path}")
         return
     
     yaml_data = yaml_handler.load(weight_lora_path)
@@ -137,24 +137,24 @@ def check_missing_loras(type_name: str, config: ConfigLoader, yaml_handler: YAML
         return
     
     registered_loras = extract_loras_from_yaml(yaml_data)
-    print(f"\n[2] 등록된 LoRA 목록 ({len(registered_loras)}개):")
-    if registered_loras:
-        for fname in sorted(registered_loras)[:10]:
-            print(f"    - {fname}")
-        if len(registered_loras) > 10:
-            print(f"    ... 그 외 {len(registered_loras) - 10}개")
-    else:
-        print("    (없음)")
+    print(f"[2] 등록된 LoRA 목록 ({len(registered_loras)}개):")
+    # if registered_loras:
+    #     for fname in sorted(registered_loras)[:10]:
+    #         print(f"    - {fname}")
+    #     if len(registered_loras) > 10:
+    #         print(f"    ... 그 외 {len(registered_loras) - 10}개")
+    # else:
+    #     print("    (없음)")
     
     # 3. 누락된 파일 찾기
     missing_loras = safetensors_files - registered_loras
     
-    print(f"\n[3] 등록되지 않은 LoRA 파일 ({len(missing_loras)}개):")
+    print(f"[3] 등록되지 않은 LoRA 파일 ({len(missing_loras)}개):")
     if missing_loras:
         for fname in sorted(missing_loras):
             print(f"    - {fname}")
-    else:
-        print("    (없음)")
+    # else:
+    #     print("    (없음)")
     
     return {
         'type': type_name,
@@ -184,7 +184,7 @@ def main():
         result = check_missing_loras(type_name, config, yaml_handler)
         if result:
             results.append(result)
-    
+    return
     # 파일로 저장
     output_file = os.path.join(script_dir, 'missing_loras_report.txt')
     with open(output_file, 'w', encoding='utf-8') as f:
