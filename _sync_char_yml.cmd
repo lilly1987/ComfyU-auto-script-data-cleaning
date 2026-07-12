@@ -1,6 +1,6 @@
 @echo off
 setlocal
-
+cd /d %~dp0
 set "ROOT=%~dp0"
 set "PYTHON_EXE=..\ComfyUI_windows_portable2\python_embeded\python.exe"
 set "SCRIPT_PATH=%ROOT%scripts\sync_char_yml.py"
