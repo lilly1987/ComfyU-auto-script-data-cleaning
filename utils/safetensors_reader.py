@@ -42,6 +42,28 @@ class SafeTensorsReader:
             return None
     
     @staticmethod
+    def read_metadata(file_path: str) -> Dict:
+        """
+        safetensors 파일의 __metadata__ 를 직접 읽습니다.
+
+        safe_open(framework='pt') 는 내부적으로 torch 를 로드해 오버헤드가 크므로,
+        파일 헤더(메타데이터)만 직접 파싱합니다. tensor 데이터는 메모리에 로드하지 않습니다.
+
+        Args:
+            file_path: safetensors 파일 경로
+
+        Returns:
+            __metadata__ 딕셔너리 (없거나 오류 시 빈 dict)
+        """
+        try:
+            with open(file_path, "rb") as f:
+                header_len = struct.unpack("<Q", f.read(8))[0]
+                header = json.loads(f.read(header_len))
+            return header.get("__metadata__") or {}
+        except Exception:
+            return {}
+    
+    @staticmethod
     def get_keys_from_folder(folder_path: str) -> Tuple[Set[str], Dict[str, str]]:
         """
         폴더의 safetensors 파일에서 키를 추출합니다.

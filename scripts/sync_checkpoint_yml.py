@@ -7,14 +7,13 @@ import sys
 from typing import Any, Dict, List, Optional, Tuple
 
 from ruamel.yaml.comments import CommentedMap
-from safetensors import safe_open
 
 
 script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
-from utils import ConfigLoader, TagProcessor, YAMLHandler
+from utils import ConfigLoader, SafeTensorsReader, TagProcessor, YAMLHandler
 
 
 DEFAULT_SKIP = False
@@ -212,10 +211,9 @@ def extract_prompts_from_prompt_json(prompt_json: Dict[str, Any]) -> Dict[str, A
 
 def extract_metadata_from_file(file_path: str) -> Dict[str, Any]:
     metadata_result: Dict[str, Any] = {}
-    try:
-        with safe_open(file_path, framework="pt") as f:
-            metadata = f.metadata() or {}
-    except Exception:
+    # safe_open(framework='pt') 대신 헤더 직접 파싱으로 torch 로드를 제거합니다.
+    metadata = SafeTensorsReader.read_metadata(file_path)
+    if not metadata:
         return metadata_result
 
     prompt_raw = metadata.get("prompt")
@@ -457,7 +455,22 @@ def sync_type(
 
     existing_keys = {key for key in yml_data.keys() if key}
     missing_keys = [key for key in file_map.keys() if key not in existing_keys]
-    metadata_cache = {key: extract_metadata_from_file(path) for key, path in file_map.items()}
+
+    # 누락 키의 메타데이터만 즉시 추출 (헤더 직접 파싱, torch 미로드)
+    missing_metadata = {
+        key: extract_metadata_from_file(path)
+        for key, path in file_map.items()
+        if key in missing_keys
+    }
+
+    # 기존 키의 메타데이터는 정규화가 실제로 필요한 항목에만 지연 추출한다.
+    metadata_cache: Dict[str, Dict[str, Any]] = {}
+
+    def get_metadata(key: str) -> Dict[str, Any]:
+        if key not in metadata_cache:
+            path = file_map.get(key)
+            metadata_cache[key] = extract_metadata_from_file(path) if path else {}
+        return metadata_cache.get(key, {})
 
     print(f"  checkpoint 파일: {len(file_map)}개")
     print(f"  yml 키: {len(existing_keys)}개")
@@ -466,10 +479,11 @@ def sync_type(
     added_count = append_missing_entries(
         yml_path=yml_path,
         missing_keys=missing_keys,
-        metadata_cache=metadata_cache,
+        metadata_cache=missing_metadata,
         dry_run=dry_run,
     )
 
+    # 누락 항목을 파일에 추가했다면 저장 대상에 포함되도록 재로드한다.
     if added_count > 0 and not dry_run:
         yml_data = yaml_handler.load(yml_path)
         if yml_data is None:
@@ -484,7 +498,7 @@ def sync_type(
         if not should_mark_auto_skip(value.get("skip")):
             continue
 
-        metadata = metadata_cache.get(str(key), {})
+        metadata = get_metadata(str(key))
         changes = normalize_entry(value, metadata)
         if changes > 0:
             value["skip"] = AUTO_SKIP
@@ -493,7 +507,8 @@ def sync_type(
 
         yml_data[key] = reorder_entry_keys(value)
 
-    if not dry_run and (added_count > 0 or normalized_count > 0 or len(yml_data) > 0):
+    # 실제 변경이 있는 경우에만 단 한 번 저장한다.
+    if not dry_run and (added_count > 0 or normalized_count > 0):
         if yaml_handler.save(yml_path, yml_data):
             print(f"  [OK] 저장 완료: {yml_path}")
         else:
