@@ -3,7 +3,7 @@
 import argparse
 import os
 import sys
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ruamel.yaml.comments import CommentedMap
 
@@ -52,11 +52,25 @@ def configure_console_encoding() -> None:
 
 
 def load_existing_keys(yml_path: str) -> Set[str]:
-    import yaml
+    """char.yml 의 최상위 키를 텍스트 스캔으로 빠르게 수집합니다.
 
+    전체 YAML 파싱(PyYAML) 대신 들여쓰기 0의 라인만 읽어 키를 추출하므로,
+    8MB 이상 대용량 파일에서도 수십 ms 안에 끝납니다.
+    """
+    keys: Set[str] = set()
     with open(yml_path, "r", encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
-    return {key for key in data.keys() if key}
+        for line in f:
+            if not line or line[:1] in (" ", "\t"):
+                continue
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#") or stripped.startswith("- "):
+                continue
+            if ":" not in stripped:
+                continue
+            key = stripped.split(":", 1)[0].strip().strip("'\"")
+            if key:
+                keys.add(key)
+    return keys
 
 
 def should_mark_auto_skip(value: Any) -> bool:
@@ -151,14 +165,22 @@ def append_missing_entries(
     return len(missing_keys)
 
 
-def reorder_entry_keys(entry: Dict[str, Any]) -> CommentedMap:
+def reorder_entry_keys(entry: Dict[str, Any]) -> Optional[CommentedMap]:
+    # 이미 원하는 순서(weight -> [favorites] -> skip -> 나머지)이면 재정렬 불필요.
+    current = list(entry.keys())
+    desired = ["weight"]
+    if "favorites" in entry:
+        desired.append("favorites")
+    desired.append("skip")
+    desired += [k for k in current if k not in desired]
+    if current == desired:
+        return None
+
     reordered = CommentedMap()
     reordered["weight"] = entry.get("weight", TEMPLATE["weight"])
     if "favorites" in entry:
         reordered["favorites"] = entry["favorites"]
     reordered["skip"] = entry.get("skip", False)
-    if "favorites" not in entry:
-        reordered.yaml_set_comment_before_after_key("skip", before="  favorites: 1")
 
     for key, value in entry.items():
         if key in {"weight", "favorites", "skip"}:
@@ -168,9 +190,14 @@ def reorder_entry_keys(entry: Dict[str, Any]) -> CommentedMap:
     return reordered
 
 
-def reorder_main_entries(yml_path: str, dry_run: bool = False) -> int:
+def reorder_main_entries(
+    yml_path: str,
+    dry_run: bool = False,
+    yml_data: Optional[Dict[str, Any]] = None,
+) -> int:
     yaml_handler = YAMLHandler(allow_duplicate_keys=True)
-    yml_data = yaml_handler.load(yml_path)
+    if yml_data is None:
+        yml_data = yaml_handler.load(yml_path)
     if yml_data is None:
         return 0
 
@@ -178,11 +205,11 @@ def reorder_main_entries(yml_path: str, dry_run: bool = False) -> int:
     for key, value in list(yml_data.items()):
         if not isinstance(value, dict):
             continue
-        yml_data[key] = reorder_entry_keys(value)
+        new_entry = reorder_entry_keys(value)
+        if new_entry is None:
+            continue
+        yml_data[key] = new_entry
         reordered_count += 1
-
-    if reordered_count > 0 and not dry_run:
-        yaml_handler.save(yml_path, yml_data)
 
     return reordered_count
 
@@ -254,12 +281,18 @@ def ensure_leading_empty_entries(
     return max(count, existing_count)
 
 
-def mark_auto_skip_entries(yml_path: str, target_keys: List[str], dry_run: bool = False) -> int:
+def mark_auto_skip_entries(
+    yml_path: str,
+    target_keys: List[str],
+    dry_run: bool = False,
+    yml_data: Optional[Dict[str, Any]] = None,
+) -> int:
     if not target_keys:
         return 0
 
     yaml_handler = YAMLHandler(allow_duplicate_keys=True)
-    yml_data = yaml_handler.load(yml_path)
+    if yml_data is None:
+        yml_data = yaml_handler.load(yml_path)
     if yml_data is None:
         return 0
 
@@ -271,9 +304,6 @@ def mark_auto_skip_entries(yml_path: str, target_keys: List[str], dry_run: bool 
         if should_mark_auto_skip(value.get("skip")):
             value["skip"] = AUTO_SKIP
             marked += 1
-
-    if marked > 0 and not dry_run:
-        yaml_handler.save(yml_path, yml_data)
 
     return marked
 
@@ -328,6 +358,13 @@ def sync_type(
     if added_count > 0:
         print(f"  추가 {'예정' if dry_run else '완료'}: {added_count}개")
 
+    # char.yml 을 한 번만 로드하고 이후 후처리(분리/auto-skip/정렬)에 공유한다.
+    yaml_handler = YAMLHandler(allow_duplicate_keys=True)
+    yml_data = yaml_handler.load(yml_path)
+    if yml_data is None:
+        print("  경고: char.yml 로드 실패")
+        return added_count, 0
+
     changed_entries, _, changed_keys = process_char_yml(
         yml_path=yml_path,
         excluded_tags=excluded_tags,
@@ -335,6 +372,8 @@ def sync_type(
         char_feature_tags=char_feature_tags,
         mark_auto_skip=True,
         dry_run=dry_run,
+        yml_data=yml_data,
+        save=False,
     )
 
     target_keys = missing_keys + [key for key in changed_keys if key not in missing_keys]
@@ -342,8 +381,18 @@ def sync_type(
         yml_path=yml_path,
         target_keys=target_keys,
         dry_run=dry_run,
+        yml_data=yml_data,
     )
-    reordered_count = reorder_main_entries(yml_path=yml_path, dry_run=dry_run)
+    reordered_count = reorder_main_entries(
+        yml_path=yml_path,
+        dry_run=dry_run,
+        yml_data=yml_data,
+    )
+
+    # 실제 변경이 있는 경우에만 단 한 번 저장한다.
+    if (changed_entries or auto_skip_count or reordered_count) and not dry_run:
+        yaml_handler.save(yml_path, yml_data)
+
     leading_empty_count = ensure_leading_empty_entries(
         yml_path=yml_path,
         dry_run=dry_run,

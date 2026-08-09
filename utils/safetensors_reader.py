@@ -5,8 +5,8 @@ SafeTensors 파일 읽기 유틸리티
 import os
 import json
 import glob
+import struct
 from typing import Dict, Optional, Tuple, Set
-from safetensors import safe_open
 
 
 class SafeTensorsReader:
@@ -16,21 +16,28 @@ class SafeTensorsReader:
     def extract_ss_tag_frequency(file_path: str) -> Optional[Dict]:
         """
         safetensors 파일에서 ss_tag_frequency 메타데이터를 추출합니다.
-        
+
+        safe_open(framework='pt') 는 내부적으로 torch 를 로드해
+        오버헤드가 크므로, 파일 헤더(메타데이터)만 직접 읽어 처리합니다.
+        tensor 데이터는 메모리에 로드하지 않습니다.
+
         Args:
             file_path: safetensors 파일 경로
-        
+
         Returns:
             ss_tag_frequency 딕셔너리 또는 None
         """
         try:
-            with safe_open(file_path, framework='pt') as f:
-                metadata = f.metadata()
-                
-                if metadata and 'ss_tag_frequency' in metadata:
-                    tag_frequency_str = metadata['ss_tag_frequency']
-                    return json.loads(tag_frequency_str)
-                return None
+            with open(file_path, "rb") as f:
+                # safetensors 헤더: 처음 8바이트는 리틀엔디언 헤더 길이
+                header_len = struct.unpack("<Q", f.read(8))[0]
+                header = json.loads(f.read(header_len))
+
+            metadata = header.get("__metadata__") or {}
+            tag_frequency_str = metadata.get("ss_tag_frequency")
+            if tag_frequency_str:
+                return json.loads(tag_frequency_str)
+            return None
         except Exception:
             return None
     

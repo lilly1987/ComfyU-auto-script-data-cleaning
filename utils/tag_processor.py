@@ -7,6 +7,12 @@ from typing import List, Optional, Tuple
 from collections import defaultdict
 
 
+# 패턴 리스트 -> 프리컴파일된 매처 리스트 캐시
+_PATTERN_CACHE: dict = {}
+# normalize_tag 결과 캐시
+_NORM_CACHE: dict = {}
+
+
 class TagProcessor:
     """태그 처리 관련 기능을 제공하는 클래스"""
     
@@ -23,10 +29,50 @@ class TagProcessor:
         """
         if not tag:
             return ''
+        cached = _NORM_CACHE.get(tag)
+        if cached is not None:
+            return cached
         normalized = tag.replace('_', ' ').lower()
         normalized = ' '.join(normalized.split())
+        if len(_NORM_CACHE) < 100000:
+            _NORM_CACHE[tag] = normalized
         return normalized
     
+    @staticmethod
+    def _get_matchers(patterns: List[str]):
+        """
+        패턴 리스트를 프리컴파일된 매처 튜플 리스트로 변환합니다 (1회만 수행).
+
+        Returns:
+            ('re', compiled_regex) 또는 ('str', 정규화된 문자열) 튜플 리스트
+        """
+        try:
+            key = tuple(patterns)
+        except Exception:
+            key = None
+        if key is not None:
+            cached = _PATTERN_CACHE.get(key)
+            if cached is not None:
+                return cached
+
+        matchers = []
+        for p in patterns:
+            if isinstance(p, re.Pattern):
+                matchers.append(('re', p))
+            elif isinstance(p, str) and p.startswith('/') and p.endswith('/'):
+                inner = p[1:-1]
+                try:
+                    matchers.append(('re', re.compile(inner, re.IGNORECASE)))
+                except re.error:
+                    matchers.append(('str', TagProcessor.normalize_tag(inner)))
+            else:
+                matchers.append(('str', TagProcessor.normalize_tag(p)))
+
+        if key is not None:
+            _PATTERN_CACHE[key] = matchers
+        return matchers
+
+
     @staticmethod
     def is_tag_excluded(tag: str, excluded_patterns: List[str]) -> bool:
         """
@@ -41,20 +87,12 @@ class TagProcessor:
         """
         normalized_tag = TagProcessor.normalize_tag(tag)
         
-        for pattern in excluded_patterns:
-            if isinstance(pattern, re.Pattern):
-                if pattern.search(normalized_tag):
+        for kind, obj in TagProcessor._get_matchers(excluded_patterns):
+            if kind == 're':
+                if obj.search(normalized_tag):
                     return True
-            elif isinstance(pattern, str) and pattern.startswith('/') and pattern.endswith('/'):
-                try:
-                    regex_pattern = pattern[1:-1]
-                    if re.search(regex_pattern, normalized_tag, re.IGNORECASE):
-                        return True
-                except re.error:
-                    if TagProcessor.normalize_tag(pattern[1:-1]) == normalized_tag:
-                        return True
             else:
-                if TagProcessor.normalize_tag(pattern) == normalized_tag:
+                if obj == normalized_tag:
                     return True
         
         return False

@@ -325,9 +325,12 @@ def process_char_yml(
     char_feature_tags: List[str],
     mark_auto_skip: bool = False,
     dry_run: bool = False,
+    yml_data: Optional[Dict[str, Any]] = None,
+    save: bool = True,
 ) -> Tuple[int, int, List[str]]:
     yaml_handler = YAMLHandler(allow_duplicate_keys=True)
-    yml_data = yaml_handler.load(yml_path)
+    if yml_data is None:
+        yml_data = yaml_handler.load(yml_path)
     if yml_data is None:
         return 0, 0, []
 
@@ -361,7 +364,7 @@ def process_char_yml(
         if result["removed_tags"]:
             print(f"      제외 제거: {', '.join(result['removed_tags'])}")
 
-    if changed_entries > 0 and not dry_run:
+    if changed_entries > 0 and not dry_run and save:
         if yaml_handler.save(yml_path, yml_data):
             print(f"  [OK] 저장 완료: {yml_path}")
         else:
