@@ -10,7 +10,7 @@ script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
-from utils import ConfigLoader, TagProcessor, SafeTensorsReader
+from utils import ConfigLoader, TagProcessor, SafeTensorsReader, scan_yaml_skip_values
 
 # 설정 로드
 config = ConfigLoader()
@@ -48,17 +48,10 @@ def process_type(type_name: str):
         print(f"  경고: YML 파일이 존재하지 않습니다: {yml_path}")
         return
     
-    # YML 파일에서 키 읽기
+    # YML 파일에서 키/스킵 값 읽기 (라인 스캔으로 전체 파싱 회피)
     print(f"  YML 파일 읽는 중: {yml_path}")
-    import yaml
-    try:
-        with open(yml_path, 'r', encoding='utf-8') as f:
-            yml_data = yaml.safe_load(f)
-            yml_keys = set(yml_data.keys()) if yml_data else set()
-    except Exception as e:
-        print(f"  [오류] YML 파일 읽기 실패: {e}")
-        print(f"  작업을 중단합니다.")
-        sys.exit(1)
+    key_skip = scan_yaml_skip_values(yml_path)
+    yml_keys = set(key_skip.keys())
     
     print(f"  YML 키 개수: {len(yml_keys)}")
     
@@ -84,13 +77,10 @@ def process_type(type_name: str):
     cnt=0
     autocnt=0
     for key in sorted(matched):
-        d=yml_data[key]
-        if not isinstance(d, dict):
-            print(f"  [경고] YML 데이터 형식 오류: {key}의 값이 딕셔너리가 아님")
-            continue
-        if d.get('skip',False):
+        skip_val = key_skip.get(key, False)
+        if skip_val:
             cnt+=1
-        if d.get('skip',False)=='auto':
+        if skip_val == 'auto':
             autocnt+=1
 
     skip_pct = (cnt / matched_count * 100) if matched_count > 0 else 0

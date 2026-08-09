@@ -12,7 +12,7 @@ script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
-from utils import ConfigLoader, TagProcessor, SafeTensorsReader, YAMLHandler
+from utils import ConfigLoader, TagProcessor, SafeTensorsReader, YAMLHandler, scan_top_level_keys
 
 # 설정 로드
 config = ConfigLoader()
@@ -38,7 +38,7 @@ def create_template(key: str, tags: str = None) -> dict:
     }
 
 def get_existing_keys_from_yml_files(lora_folder_path: str) -> set:
-    """lora 폴더의 yml 파일들(char.yml 제외)에서 키를 추출합니다."""
+    """lora 폴더의 yml 파일들(char.yml 제외)에서 키를 추출합니다 (라인 스캔)."""
     keys = set()
     
     if not os.path.exists(lora_folder_path):
@@ -52,14 +52,12 @@ def get_existing_keys_from_yml_files(lora_folder_path: str) -> set:
         if filename == 'char.yml':
             continue
         
-        yml_data = YAMLHandler.load_simple(yml_file)
-        if yml_data is None:
-            print(f"  [오류] YML 파일을 로드할 수 없습니다: {yml_file}")
+        try:
+            keys |= scan_top_level_keys(yml_file)
+        except Exception as e:
+            print(f"  [오류] YML 파일을 로드할 수 없습니다: {yml_file} ({e})")
             print(f"  작업을 중단합니다.")
             sys.exit(1)
-        
-        if yml_data and isinstance(yml_data, dict):
-            keys.update(yml_data.keys())
     
     return keys
 

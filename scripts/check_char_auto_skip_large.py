@@ -4,14 +4,12 @@ import os
 import sys
 from typing import Any
 
-import yaml
-
 
 script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if script_dir not in sys.path:
     sys.path.insert(0, script_dir)
 
-from utils import ConfigLoader
+from utils import ConfigLoader, scan_yaml_skip_values
 
 
 MIN_SIZE_BYTES = 200 * 1024 * 1024
@@ -32,11 +30,6 @@ def is_auto_skip(value: Any) -> bool:
     return value in (False, None) or (isinstance(value, str) and value.strip().lower() == "auto")
 
 
-def load_yml(yml_path: str) -> dict:
-    with open(yml_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
-
-
 def process_type(type_name: str, comfui_dir: str, data_dir: str) -> list:
     lora_dir = os.path.join(comfui_dir, "models", "loras", type_name, "char")
     yml_path = os.path.join(data_dir, type_name, "lora", "char.yml")
@@ -45,17 +38,13 @@ def process_type(type_name: str, comfui_dir: str, data_dir: str) -> list:
         print(f"warning: char.yml not found: {yml_path}", file=sys.stderr)
         return []
 
-    yml_data = load_yml(yml_path)
+    key_skip = scan_yaml_skip_values(yml_path)
     results = []
-    for key in yml_data.keys():
+    for key, skip_val in key_skip.items():
         if not key:
             continue
 
-        entry = yml_data.get(key)
-        if not isinstance(entry, dict):
-            continue
-
-        if not is_auto_skip(entry.get("skip")):
+        if not is_auto_skip(skip_val):
             continue
 
         safetensors_path = os.path.join(lora_dir, f"{key}.safetensors")
