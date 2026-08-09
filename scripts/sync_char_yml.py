@@ -105,7 +105,7 @@ def build_initial_values(
         char_value = TEMPLATE["positive"]["char"].strip()
 
     if dress_tag_list:
-        dress_value = f"{{  {', '.join(dress_tag_list)} |4::__dress__}},"
+        dress_value = f"{{  {', '.join(dress_tag_list)} |8::__dress_set/dress_set__}},"
     else:
         dress_value = TEMPLATE["positive"]["dress"]
 

@@ -23,6 +23,7 @@ char:
     - '/from .*/' 
     - '/huge_breasts .*/'
     - '/holding .*/'
+    - '/.*leotard.*/'
     - '/.*portrait.*/'
     - '/.*headphones.*/'
     - '/.*bandaid .*/'
@@ -127,14 +128,17 @@ char:
   
   # dress 필드로 이동할 태그 목록
   # 정규식 패턴 사용 가능: "/pattern/" 형태로 감싸면 정규식으로 인식됩니다.
-  dress_tags:
+  dress_tags: #  gloves, bare shoulders, clothing cutout, blue gloves, detached sleeves, headgear, navel cutout, stomach cutout, leotard, thighhighs, high heels ,thigh boots,
     - 'zettai ryouiki'
     - 'hat'
     - 'side slit'
     - 'top'
     - '/.*bikini.*/'
+    - '/.*halterneck.*/'
+    - '/.*sleeve.*/'
     - '/.*apron.*/'
     - '/.* top.*/'
+    - '/.* collar.*/'
     - '/.* coat.*/'
     - '/.* footwear.*/'
     - '/.* bikini.*/'
@@ -143,7 +147,7 @@ char:
     - '/.* pantyhose.*/'
     - '/.* eyewear.*/'
     # - '/.* shoulder.*/'
-    - '/.* boots.*/'
+    - '/.*boots.*/'
     - '/.* hat.*/'
     - '/.* socks.*/'
     - '/.* clothes.*/'
@@ -156,10 +160,10 @@ char:
     - '/.*collarbone.*/'
     - '/.*sleeves.*/'
     - '/.*jewelry.*/'
-    - '/.*greyscale.*/'
-    - '/.*swimsuit.*/'
+    - '/.*greyscale.*/' 
     - '/.*manga.*/'
     - '/.*shorts.*/'
+    - '/.*cutout.*/'
     - '/.*swimsuit.*/'
     - '/.*thighhighs.*/'
     - '/.*underwear.*/'
